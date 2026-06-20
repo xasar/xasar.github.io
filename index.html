@@ -224,12 +224,16 @@
         }
 
         .subsection {
-          grid-template-columns: 4em auto;
-          grid-gap: 0.4em;
+          grid-template-columns: 1fr;
+          grid-gap: 0.2em;
         }
 
         .subsection-left {
-          font-size: 7pt;
+          display: none;
+        }
+
+        .subsection-right {
+          grid-column-start: 1;
         }
       }
     </style>

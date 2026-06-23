@@ -367,6 +367,7 @@
         let activeTextId = null;
         let globalIsResizingFlag = false; 
 
+        // DOM Elements MUST be defined before we attach listeners to them!
         const uploadScreen    = document.getElementById('upload-screen');
         const dropZone        = document.getElementById('drop-zone');
         const fileInput       = document.getElementById('file-input');
@@ -601,8 +602,8 @@
             sizeSelect.onchange = function(e) {
                 e.stopPropagation();
                 data.size = parseInt(sizeSelect.value);
-                parentEl.style.fontSize = sizeSelect.value;
-                if (targetField) targetField.style.fontSize = sizeSelect.value;
+                parentEl.style.fontSize = (data.size * scale) + 'px';
+                if (targetField) targetField.style.fontSize = (data.size * scale) + 'px';
             };
 
             var div1 = document.createElement('div'); div1.className = 'divider';
@@ -650,15 +651,7 @@
             };
 
             colorBlock.appendChild(colorInput);
-
-            tooltip.appendChild(fontSelect);
-            tooltip.appendChild(sizeSelect);
-            tooltip.appendChild(div1);
-            tooltip.appendChild(btnBold);
-            tooltip.appendChild(btnItalic);
-            tooltip.appendChild(div2);
-            tooltip.appendChild(colorBlock);
-
+            tooltip.append(fontSelect, sizeSelect, div1, btnBold, btnItalic, div2, colorBlock);
             parentEl.appendChild(tooltip);
         }
 
@@ -668,7 +661,7 @@
             el.dataset.id = data.id;
             el.style.left = (data.x * 100) + '%';
             el.style.top  = (data.y * 100) + '%';
-            el.style.fontSize = (data.size || 14) + 'px';
+            el.style.fontSize = ((data.size || 14) * scale) + 'px';
             el.style.fontFamily = data.font === 'Times' ? 'Times New Roman' : (data.font || 'Courier');
             el.style.fontWeight = data.isBold ? 'bold' : 'normal';
             el.style.fontStyle = data.isItalic ? 'italic' : 'normal';
@@ -933,7 +926,7 @@
             inputWrapper.style.left = (relX * 100) + '%';
             inputWrapper.style.top = (relY * 100) + '%';
             inputWrapper.style.border = '1px dashed #1a73e8';
-            inputWrapper.style.fontSize = '32px';
+            inputWrapper.style.fontSize = (32 * scale) + 'px';
             inputWrapper.style.fontFamily = 'Courier';
             inputWrapper.style.width = '40%';
 
@@ -958,7 +951,7 @@
             attachTextFormatterTooltip(inputWrapper, mockData, field);
 
             field.oninput = function() {
-                inputWrapper.style.fontSize = mockData.size + 'px';
+                inputWrapper.style.fontSize = (mockData.size * scale) + 'px'; 
                 inputWrapper.style.fontFamily = mockData.font === 'Times' ? 'Times New Roman' : mockData.font;
                 inputWrapper.style.fontWeight = mockData.isBold ? 'bold' : 'normal';
                 inputWrapper.style.fontStyle = mockData.isItalic ? 'italic' : 'normal';
@@ -1078,9 +1071,11 @@
             updateAnnCount();
         });
 
-        /* Helper function to draw an image to a temporary canvas and get un-sandboxed binary data */
         function extractCleanImageData(srcUrl) {
             return new Promise((resolve) => {
+                if (srcUrl.startsWith('data:image/jpeg') || srcUrl.startsWith('data:image/png')) {
+                    return resolve(srcUrl);
+                }
                 const tempImg = new Image();
                 tempImg.crossOrigin = "anonymous";
                 tempImg.onload = function() {
@@ -1090,9 +1085,8 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(tempImg, 0, 0);
                     try {
-                        resolve(canvas.toDataURL('image/jpeg', 0.92));
+                        resolve(canvas.toDataURL('image/png'));
                     } catch(err) {
-                        // Fallback directly to source if canvas reading fails
                         resolve(srcUrl);
                     }
                 };
@@ -1101,9 +1095,6 @@
             });
         }
 
-        /* ====================================================================
-           PDF EXPORT RE-BAKING PIPELINE
-           ==================================================================== */
         document.getElementById('btn-export').addEventListener('click', async function () {
             if (!base64BackupSource) {
                 showToast('No valid source file loaded', 'error');
@@ -1129,7 +1120,6 @@
                     const { width, height } = targetPage.getSize();
                     const pageAnns = annotations[pageNum];
 
-                    // Draw Highlights
                     if (pageAnns.highlights) {
                         for (let hl of pageAnns.highlights) {
                             const hex = hl.color.replace('#', '');
@@ -1150,7 +1140,6 @@
                         }
                     }
 
-                    // Render Standard Text Nodes
                     if (pageAnns.texts) {
                         for (let txt of pageAnns.texts) {
                             let fontKey = PDFLib.StandardFonts.Courier;
@@ -1168,9 +1157,7 @@
                             const g = parseInt(hex.substring(2, 4), 16) / 255;
                             const b = parseInt(hex.substring(4, 6), 16) / 255;
                             
-                            // FIXED: Proportional point scale transformation to prevent scaling bugs
-                            const baselineScaleFactor = width / pdfCanvas.offsetWidth;
-                            const fontSize = (txt.size || 14) * baselineScaleFactor * (1 / scale);
+                            const fontSize = txt.size || 14;
 
                             targetPage.drawText(txt.content, {
                                 x: txt.x * width,
@@ -1183,11 +1170,9 @@
                         }
                     }
 
-                    // Embed Images
                     if (pageAnns.images) {
                         for (let imgObj of pageAnns.images) {
                             try {
-                                // FIXED: De-sandbox image formats to bypass tracking limits cleanly
                                 const cleanImgSrc = await extractCleanImageData(imgObj.src);
                                 
                                 let embeddedImg = cleanImgSrc.includes('image/png') ? 

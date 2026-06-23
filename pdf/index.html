@@ -27,7 +27,6 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; height:100vh; }
 
-        /* Upload Screen */
         #upload-screen {
             position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
             background:var(--bg);
@@ -43,26 +42,20 @@
             content:''; position:absolute; inset:0; background:linear-gradient(135deg, var(--accent-glow), transparent);
             opacity:0; transition:opacity 0.3s;
         }
-        .drop-zone:hover, .drop-zone.drag-over {
-            border-color:var(--accent); transform:translateY(-2px);
-            box-shadow:0 8px 40px rgba(245,158,11,0.08);
-        }
+        .drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 40px rgba(245,158,11,0.08); }
         .drop-zone:hover::before, .drop-zone.drag-over::before { opacity:1; }
         .drop-zone i { font-size:48px; color:var(--accent); margin-bottom:20px; display:block; position:relative; }
         .drop-zone h2 { font-size:22px; font-weight:600; margin-bottom:8px; position:relative; }
         .drop-zone p { color:var(--text-muted); font-size:14px; position:relative; }
         .drop-zone .browse-btn {
             display:inline-block; margin-top:20px; padding:10px 28px; background:var(--accent);
-            color:#000; font-weight:600; border-radius:10px; font-size:14px; position:relative;
-            transition:background 0.2s;
+            color:#000; font-weight:600; border-radius:10px; font-size:14px; position:relative; transition:background 0.2s;
         }
         .drop-zone .browse-btn:hover { background:var(--accent-hover); }
 
-        /* Main Layout */
         #app { display:none; height:100vh; flex-direction:column; }
         #app.active { display:flex; }
 
-        /* Toolbar */
         .toolbar {
             height:54px; background:var(--sidebar); border-bottom:1px solid var(--border);
             display:flex; align-items:center; padding:0 16px; gap:8px; flex-shrink:0;
@@ -85,17 +78,15 @@
         .zoom-label { font-size:12px; color:var(--text-muted); min-width:42px; text-align:center; font-weight:500; }
         .toolbar-right { margin-left:auto; display:flex; align-items:center; gap:6px; }
 
-        /* Content */
         .content { display:flex; flex:1; overflow:hidden; }
 
-        /* Sidebar Actions Wrapper */
         .sidebar {
             width:210px; background:var(--sidebar); border-right:1px solid var(--border);
             padding:16px 12px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; overflow-y:auto;
         }
         .sidebar-section { margin-bottom:12px; }
         .sidebar-label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted); margin-bottom:8px; font-weight:600; }
-        
+
         .color-grid { display:flex; gap:6px; flex-wrap:wrap; }
         .color-swatch {
             width:28px; height:28px; border-radius:8px; border:2px solid transparent; cursor:pointer;
@@ -118,10 +109,8 @@
         .action-btn.danger:hover { border-color:var(--danger); color:var(--danger); }
         .action-btn i { width:16px; text-align:center; }
 
-        /* Viewer Area Page Scrollbars Fixes */
         .viewer-area {
-            flex:1; overflow:auto !important; display:block; padding:30px;
-            background:var(--bg);
+            flex:1; overflow:auto !important; display:block; padding:30px; background:var(--bg);
             background-image: radial-gradient(circle at 50% 0%, rgba(245,158,11,0.02) 0%, transparent 60%);
         }
         .viewer-area::-webkit-scrollbar { width:10px; height:10px; display:block !important; }
@@ -135,7 +124,6 @@
         }
         .page-container canvas { display:block; }
 
-        /* Text Layer - PDF.js */
         .text-layer {
             position:absolute; text-align:initial; inset:0; overflow:hidden;
             opacity:0.22; line-height:1; -webkit-text-size-adjust:none; text-size-adjust:none;
@@ -145,22 +133,18 @@
             color:transparent; position:absolute; white-space:pre; cursor:text; transform-origin:0% 0%;
         }
 
-        /* Selection states */
         .tool-highlight .text-layer ::selection { background:rgba(245,158,11,0.45); }
         .tool-highlight .text-layer { opacity:0.22; cursor:text; pointer-events:auto; }
-
         .tool-hand .text-layer,
         .tool-text .text-layer,
         .tool-image .text-layer { pointer-events:none; }
-
         .tool-text .page-container,
         .tool-image .page-container { cursor:crosshair; }
 
-        /* Annotation Layer */
         .annotation-layer { position:absolute; inset:0; pointer-events:none; overflow:visible; }
         .hl-rect { position:absolute; border-radius:2px; pointer-events:none; mix-blend-mode:multiply; }
 
-        /* Clean Text Nodes — Transparent Box Design */
+        /* Text Annotations */
         .text-annotation {
             position:absolute; pointer-events:auto; cursor:move; min-width:60px;
             background:transparent; border:1px solid transparent;
@@ -169,13 +153,14 @@
             display: inline-block;
         }
         .text-annotation:hover { border-color:rgba(26, 115, 232, 0.4); background: rgba(26, 115, 232, 0.03); }
-        
-        /* Floating Screenshot Tooltip Formatting panel */
+
+        /* Tooltip */
         .text-formatter-tooltip {
             position: absolute; bottom: calc(100% + 12px); left: 0;
             background: #111111; border: 1px solid #222222; border-radius: 8px;
             padding: 6px 10px; display: flex; align-items: center; gap: 8px;
             box-shadow: 0 4px 18px rgba(0,0,0,0.45); z-index: 500; pointer-events: auto;
+            white-space: nowrap;
         }
         .text-formatter-tooltip::after {
             content: ''; position: absolute; top: 100%; left: 16px;
@@ -185,7 +170,8 @@
         .text-formatter-tooltip select {
             background: #222222; color: #ffffff; font-size: 13px; border: 1px solid #333333;
             border-radius: 4px; padding: 3px 24px 3px 8px; outline: none; cursor: pointer;
-            appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='white'><path d='M7 10l5 5 5-5z'/></svg>");
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='white'><path d='M7 10l5 5 5-5z'/></svg>");
             background-repeat: no-repeat; background-position: right 8px center;
         }
         .text-formatter-tooltip select.size-select { width: 75px; }
@@ -197,15 +183,61 @@
         }
         .text-formatter-tooltip .style-btn:hover { background: #222222; color: #ffffff; }
         .text-formatter-tooltip .style-btn.active { color: #1a73e8; background: rgba(26, 115, 232, 0.15); }
+
+        /* Delete btn inside tooltip */
+        .text-formatter-tooltip .delete-btn {
+            background: transparent; border: none; color: #666666; font-size: 13px;
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border-radius: 4px; transition: all 0.1s;
+        }
+        .text-formatter-tooltip .delete-btn:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+        /* Custom Color Picker in Tooltip */
         .text-formatter-tooltip .color-picker-block {
             width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2);
-            cursor: pointer; position: relative;
-        }
-        .text-formatter-tooltip .color-picker-input {
-            position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
+            cursor: pointer; position: relative; flex-shrink: 0;
         }
 
-        /* Right-Side Box Horizontal Width Stretch Handle */
+        /* Custom Color Popup — anchored to tooltip, not top-left */
+        .color-popup {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            min-width: 170px;
+        }
+        .color-popup.open { display: flex; }
+        .color-popup-swatches {
+            display: grid;
+            grid-template-columns: repeat(6, 22px);
+            gap: 5px;
+        }
+        .color-popup-swatch {
+            width: 22px; height: 22px; border-radius: 5px; cursor: pointer;
+            border: 2px solid transparent; transition: transform 0.1s, border-color 0.1s;
+        }
+        .color-popup-swatch:hover { transform: scale(1.15); }
+        .color-popup-swatch.selected { border-color: #ffffff; }
+        .color-popup-native-row {
+            display: flex; align-items: center; gap: 6px; border-top: 1px solid #333; padding-top: 8px;
+        }
+        .color-popup-native-row label {
+            font-size: 11px; color: #888; cursor: pointer; flex: 1;
+        }
+        .color-popup-native-input {
+            width: 24px; height: 24px; border: none; padding: 0; background: none;
+            cursor: pointer; border-radius: 4px; overflow: hidden;
+        }
+
+        /* Width resize handle */
         .text-width-handle {
             position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
             width: 12px; height: 12px; border-radius: 50%; background: #1a73e8;
@@ -213,15 +245,6 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.3); pointer-events: auto;
         }
         .text-annotation-editing .text-width-handle { display: block; }
-
-        /* Delete Badge */
-        .text-annotation .ann-delete-badge {
-            position:absolute; top:50%; right:-28px; transform:translateY(-50%);
-            width:20px; height:20px; border-radius:50%; background:#ef4444; color:#fff;
-            font-size:10px; cursor:pointer; display:none; align-items:center; justify-content:center;
-            border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 10;
-        }
-        .text-annotation:hover:not(.text-annotation-editing) .ann-delete-badge { display:flex; }
 
         /* Image nodes */
         .image-annotation {
@@ -243,7 +266,7 @@
         }
         .image-annotation:hover .resize-handle { display:block; }
 
-        /* Stable Auto-Growing Text Input Style */
+        /* Text Input Overlay */
         .text-input-overlay-box {
             border: none !important; background: transparent !important;
             outline: none !important; padding: 0 !important; margin: 0 !important;
@@ -264,6 +287,18 @@
             border-radius:50%; animation:spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform:rotate(360deg); } }
+
+        .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast {
+            padding:10px 16px; border-radius:10px; font-size:13px; font-weight:500;
+            background:var(--surface-2); color:var(--text); border:1px solid var(--border);
+            box-shadow:0 4px 20px rgba(0,0,0,0.4); animation:slideIn 0.25s ease;
+            display:flex; align-items:center; gap:8px;
+        }
+        .toast.success { border-color:var(--success); color:var(--success); }
+        .toast.error { border-color:var(--danger); color:var(--danger); }
+        .toast.info { border-color:var(--accent); color:var(--accent); }
+        @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
     </style>
 </head>
 <body>
@@ -282,29 +317,24 @@
         <div class="toolbar">
             <div class="logo"><i class="fas fa-file-pdf" style="margin-right:6px;"></i><span>PDF Annotator</span></div>
             <div class="divider"></div>
-            
             <button class="tb-btn" id="btn-open" title="Open PDF"><i class="fas fa-folder-open"></i></button>
             <input type="file" accept=".pdf,application/pdf" class="hidden-input" id="file-input-2">
             <div class="divider"></div>
-            
             <button class="tb-btn" id="btn-prev" title="Previous Page (Left Arrow)"><i class="fas fa-chevron-left"></i></button>
             <input type="number" class="page-input" id="page-input" value="1" min="1">
             <span style="font-size:13px; color:var(--text-muted);">/</span>
             <span style="font-size:13px; color:var(--text-muted);" id="total-pages">0</span>
             <button class="tb-btn" id="btn-next" title="Next Page (Right Arrow)"><i class="fas fa-chevron-right"></i></button>
             <div class="divider"></div>
-            
             <button class="tb-btn" id="btn-zoom-out" title="Zoom Out (Ctrl+-)"><i class="fas fa-minus"></i></button>
             <span class="zoom-label" id="zoom-label">100%</span>
             <button class="tb-btn" id="btn-zoom-in" title="Zoom In (Ctrl++)"><i class="fas fa-plus"></i></button>
             <button class="tb-btn" id="btn-fit" title="Fit to Width (Ctrl+0)"><i class="fas fa-arrows-left-right"></i></button>
             <div class="divider"></div>
-
             <button class="tb-btn active" data-tool="hand" id="tool-hand" title="Hand Tool (H)"><i class="fas fa-hand"></i></button>
             <button class="tb-btn" data-tool="highlight" id="tool-highlight" title="Highlight Tool (L)"><i class="fas fa-highlighter"></i></button>
             <button class="tb-btn" data-tool="text" id="tool-text" title="Insert Text Tool (T)"><i class="fas fa-font"></i></button>
             <button class="tb-btn" data-tool="image" id="tool-image" title="Insert Image Tool (I)"><i class="fas fa-image"></i></button>
-
             <div class="toolbar-right">
                 <span id="ann-count" style="font-size:11px; color:var(--text-muted); margin-right:6px;"></span>
                 <button class="tb-btn" style="color:var(--accent); width:auto; padding:0 12px; gap:6px;" id="btn-export" title="Export to PDF Document File">
@@ -349,25 +379,32 @@
             { name: 'Purple', color: '#c084fc' },
         ];
 
+        // Preset colors for the custom text color picker popup
+        const TEXT_COLORS = [
+            '#1a73e8','#ffffff','#000000','#ef4444','#f59e0b',
+            '#22c55e','#a855f7','#ec4899','#06b6d4','#f97316',
+            '#84cc16','#6366f1','#14b8a6','#e11d48','#0ea5e9',
+            '#d97706','#16a34a','#7c3aed'
+        ];
+
         let pdfDoc = null;
-        let base64BackupSource = ""; 
+        let base64BackupSource = "";
         let currentPage = 1;
         let totalPages = 0;
         let scale = 1.0;
         let currentTool = 'hand';
         let highlightColor = HIGHLIGHT_COLORS[0].color;
-        let annotations = {};          
+        let annotations = {};
         let nextId = 1;
         let isRendering = false;
         let pendingPage = null;
         let dragState = null;
         let resizeState = null;
-        let textWidthResizeState = null; 
-        let imagePlacePos = null;      
+        let textWidthResizeState = null;
+        let imagePlacePos = null;
         let activeTextId = null;
-        let globalIsResizingFlag = false; 
+        let globalIsResizingFlag = false;
 
-        // Initialize DOM Elements
         const uploadScreen    = document.getElementById('upload-screen');
         const dropZone        = document.getElementById('drop-zone');
         const fileInput       = document.getElementById('file-input');
@@ -402,82 +439,43 @@
             annCountEl.textContent = n > 0 ? n + ' annotation' + (n > 1 ? 's' : '') : '';
         }
 
-        function showToast(message, type = 'info') {
+        function showToast(msg, type = 'info') {
             var t = document.createElement('div');
             t.className = 'toast ' + type;
-            t.innerHTML = '<i class="fas fa-info-circle"></i>' + message;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            t.innerHTML = '<i class="fas ' + (icons[type] || 'fa-info-circle') + '"></i>' + msg;
             toastContainer.appendChild(t);
-            setTimeout(function () {
-                t.classList.add('out');
-                setTimeout(function () { t.remove(); }, 300);
-            }, 2800);
+            setTimeout(() => t.remove(), 3000);
         }
 
-        function buildColorGrid() {
-            colorGrid.innerHTML = '';
-            HIGHLIGHT_COLORS.forEach(function (c) {
-                var s = document.createElement('div');
-                s.className = 'color-swatch' + (c.color === highlightColor ? ' active' : '');
-                s.style.background = c.color;
-                s.addEventListener('click', function () {
-                    highlightColor = c.color;
-                    colorGrid.querySelectorAll('.color-swatch').forEach(function (el) { el.classList.remove('active'); });
-                    s.classList.add('active');
-                });
-                colorGrid.appendChild(s);
-            });
-        }
-        buildColorGrid();
+        // PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        function setTool(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tb-btn[data-tool]').forEach(function (b) {
-                b.classList.toggle('active', b.dataset.tool === tool);
-            });
-            viewerArea.className = 'viewer-area tool-' + tool;
-            document.getElementById('highlight-colors-section').style.display = tool === 'highlight' ? '' : 'none';
-            closeActiveTextOptions();
-        }
-
-        document.querySelectorAll('.tb-btn[data-tool]').forEach(function (btn) {
-            btn.addEventListener('click', function () { setTool(btn.dataset.tool); });
-        });
-
-        async function loadPDF(uint8Data) {
+        async function loadPDF(data) {
             try {
-                pdfDoc = await pdfjsLib.getDocument({ data: uint8Data }).promise;
-                totalPages  = pdfDoc.numPages;
-                currentPage = 1;
-                annotations = {};
-                nextId      = 1;
-
+                pdfDoc = await pdfjsLib.getDocument({ data: data }).promise;
+                totalPages = pdfDoc.numPages;
                 totalPagesEl.textContent = totalPages;
-                pageInputEl.max = totalPages;
-                pageInputEl.value = 1;
-
+                annotations = {};
                 uploadScreen.style.display = 'none';
                 app.classList.add('active');
-
                 await fitToWidth();
-                showToast('Loaded Document Asset', 'success');
+                showToast('PDF loaded successfully', 'success');
             } catch (e) {
-                showToast('Failed to read document configuration', 'error');
+                showToast('Failed to load PDF', 'error');
             }
         }
 
         function handleFile(file) {
             if (!file || file.type !== 'application/pdf') return;
             var reader = new FileReader();
-            reader.onload = function (e) { 
+            reader.onload = function (e) {
                 const rawBuffer = e.target.result;
                 const view = new Uint8Array(rawBuffer);
-                
                 let binaryString = "";
-                for (let i = 0; i < view.length; i++) {
-                    binaryString += String.fromCharCode(view[i]);
-                }
+                for (let i = 0; i < view.length; i++) binaryString += String.fromCharCode(view[i]);
                 base64BackupSource = btoa(binaryString);
-                loadPDF(view); 
+                loadPDF(view);
             };
             reader.readAsArrayBuffer(file);
         }
@@ -497,14 +495,11 @@
         async function renderPage(num) {
             if (isRendering) { pendingPage = num; return; }
             isRendering = true;
-
             try {
                 var page     = await pdfDoc.getPage(num);
                 var viewport = page.getViewport({ scale: scale });
-
-                pageContainer.style.width = viewport.width + 'px';
+                pageContainer.style.width  = viewport.width + 'px';
                 pageContainer.style.height = viewport.height + 'px';
-
                 pdfCanvas.width  = viewport.width;
                 pdfCanvas.height = viewport.height;
                 var ctx = pdfCanvas.getContext('2d');
@@ -527,9 +522,7 @@
                 pageInputEl.value = num;
                 currentPage = num;
                 updateAnnCount();
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
             isRendering = false;
             if (pendingPage !== null) { var p = pendingPage; pendingPage = null; renderPage(p); }
         }
@@ -538,7 +531,6 @@
             closeActiveTextOptions();
             annotationLayer.innerHTML = '';
             var anns = getAnnotations(pageNum);
-
             anns.highlights.forEach(function (hl) {
                 hl.rects.forEach(function (r) {
                     var div = document.createElement('div');
@@ -552,7 +544,6 @@
                     annotationLayer.appendChild(div);
                 });
             });
-
             anns.texts.forEach(function (t) { createTextElement(t); });
             anns.images.forEach(function (img) { createImageElement(img); });
         }
@@ -560,7 +551,6 @@
         function closeActiveTextOptions() {
             var openTooltip = pageContainer.querySelector('.text-formatter-tooltip');
             if (openTooltip) openTooltip.remove();
-            
             document.querySelectorAll('.text-annotation-editing').forEach(el => {
                 el.classList.remove('text-annotation-editing');
                 el.style.border = '1px solid transparent';
@@ -568,7 +558,59 @@
             activeTextId = null;
         }
 
-        function attachTextFormatterTooltip(parentEl, data, targetField = null) {
+        // ─── Custom Color Popup builder ───────────────────────────────────────────
+        function buildColorPopup(currentColor, onColorChange) {
+            var popup = document.createElement('div');
+            popup.className = 'color-popup';
+
+            var swatchGrid = document.createElement('div');
+            swatchGrid.className = 'color-popup-swatches';
+
+            TEXT_COLORS.forEach(function(hex) {
+                var sw = document.createElement('div');
+                sw.className = 'color-popup-swatch' + (hex === currentColor ? ' selected' : '');
+                sw.style.backgroundColor = hex;
+                sw.title = hex;
+                sw.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    swatchGrid.querySelectorAll('.color-popup-swatch').forEach(s => s.classList.remove('selected'));
+                    sw.classList.add('selected');
+                    onColorChange(hex);
+                    popup.classList.remove('open');
+                });
+                swatchGrid.appendChild(sw);
+            });
+
+            var nativeRow = document.createElement('div');
+            nativeRow.className = 'color-popup-native-row';
+
+            var nativeLbl = document.createElement('label');
+            nativeLbl.textContent = 'Custom color';
+
+            var nativeInput = document.createElement('input');
+            nativeInput.type = 'color';
+            nativeInput.className = 'color-popup-native-input';
+            nativeInput.value = currentColor;
+            nativeInput.addEventListener('input', function(e) {
+                e.stopPropagation();
+                onColorChange(nativeInput.value);
+            });
+            nativeInput.addEventListener('change', function(e) {
+                e.stopPropagation();
+                onColorChange(nativeInput.value);
+                popup.classList.remove('open');
+            });
+            nativeLbl.appendChild(nativeInput);
+            nativeRow.appendChild(nativeLbl);
+
+            popup.appendChild(swatchGrid);
+            popup.appendChild(nativeRow);
+            return popup;
+        }
+
+        // ─── Tooltip with delete icon ─────────────────────────────────────────────
+        function attachTextFormatterTooltip(parentEl, data, targetField) {
             var openTooltip = pageContainer.querySelector('.text-formatter-tooltip');
             if (openTooltip) openTooltip.remove();
             activeTextId = data.id;
@@ -576,11 +618,12 @@
             var tooltip = document.createElement('div');
             tooltip.className = 'text-formatter-tooltip';
 
+            // Font select
             var fontSelect = document.createElement('select');
             ['Courier', 'Helvetica', 'Times'].forEach(f => {
                 var opt = document.createElement('option');
                 opt.value = f; opt.textContent = f;
-                if(data.font === f) opt.selected = true;
+                if (data.font === f) opt.selected = true;
                 fontSelect.appendChild(opt);
             });
             fontSelect.onchange = function(e) {
@@ -591,12 +634,13 @@
                 if (targetField) targetField.style.fontFamily = fam;
             };
 
+            // Size select
             var sizeSelect = document.createElement('select');
             sizeSelect.className = 'size-select';
-            ['12px', '14px', '18px', '24px', '32px', '48px'].forEach(s => {
+            ['12px','14px','18px','24px','32px','48px'].forEach(s => {
                 var opt = document.createElement('option');
                 opt.value = s; opt.textContent = s;
-                if((data.size || 14) + 'px' === s) opt.selected = true;
+                if ((data.size || 14) + 'px' === s) opt.selected = true;
                 sizeSelect.appendChild(opt);
             });
             sizeSelect.onchange = function(e) {
@@ -608,74 +652,97 @@
 
             var div1 = document.createElement('div'); div1.className = 'divider';
 
+            // Bold
             var btnBold = document.createElement('button');
             btnBold.className = 'style-btn' + (data.isBold ? ' active' : '');
             btnBold.innerHTML = '<i class="fas fa-bold"></i>';
             btnBold.onclick = function(e) {
                 e.stopPropagation();
                 data.isBold = !data.isBold;
-                const weight = data.isBold ? 'bold' : 'normal';
-                parentEl.style.fontWeight = weight;
-                if (targetField) targetField.style.fontWeight = weight;
+                parentEl.style.fontWeight = data.isBold ? 'bold' : 'normal';
+                if (targetField) targetField.style.fontWeight = data.isBold ? 'bold' : 'normal';
                 btnBold.classList.toggle('active');
             };
 
+            // Italic
             var btnItalic = document.createElement('button');
             btnItalic.className = 'style-btn' + (data.isItalic ? ' active' : '');
             btnItalic.innerHTML = '<i class="fas fa-italic"></i>';
             btnItalic.onclick = function(e) {
                 e.stopPropagation();
                 data.isItalic = !data.isItalic;
-                const styleVal = data.isItalic ? 'italic' : 'normal';
-                parentEl.style.fontStyle = styleVal;
-                if (targetField) targetField.style.fontStyle = styleVal;
+                parentEl.style.fontStyle = data.isItalic ? 'italic' : 'normal';
+                if (targetField) targetField.style.fontStyle = data.isItalic ? 'italic' : 'normal';
                 btnItalic.classList.toggle('active');
             };
 
             var div2 = document.createElement('div'); div2.className = 'divider';
 
+            // Color swatch block — opens custom popup
             var colorBlock = document.createElement('div');
             colorBlock.className = 'color-picker-block';
             colorBlock.style.backgroundColor = data.color || '#1a73e8';
+            colorBlock.title = 'Text color';
 
-            var colorInput = document.createElement('input');
-            colorInput.type = 'color';
-            colorInput.className = 'color-picker-input';
-            colorInput.value = data.color || '#1a73e8';
-            colorInput.oninput = function(e) {
+            var colorPopup = buildColorPopup(data.color || '#1a73e8', function(newColor) {
+                data.color = newColor;
+                colorBlock.style.backgroundColor = newColor;
+                parentEl.style.color = newColor;
+                if (targetField) targetField.style.color = newColor;
+            });
+            // Attach popup to tooltip (not body) so it stays anchored
+            tooltip.appendChild(colorPopup);
+
+            colorBlock.addEventListener('mousedown', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
-                data.color = colorInput.value;
-                colorBlock.style.backgroundColor = data.color;
-                parentEl.style.color = data.color;
-                if (targetField) targetField.style.color = data.color;
+                var isOpen = colorPopup.classList.contains('open');
+                colorPopup.classList.toggle('open', !isOpen);
+            });
+
+            var div3 = document.createElement('div'); div3.className = 'divider';
+
+            // Delete button
+            var btnDelete = document.createElement('button');
+            btnDelete.className = 'delete-btn';
+            btnDelete.title = 'Delete this text';
+            btnDelete.innerHTML = '<i class="fas fa-trash"></i>';
+            btnDelete.onclick = function(e) {
+                e.stopPropagation();
+                deleteAnnotation(data.id);
             };
 
-            colorBlock.appendChild(colorInput);
-            tooltip.append(fontSelect, sizeSelect, div1, btnBold, btnItalic, div2, colorBlock);
+            tooltip.append(fontSelect, sizeSelect, div1, btnBold, btnItalic, div2, colorBlock, div3, btnDelete);
             parentEl.appendChild(tooltip);
+
+            // Close color popup when clicking elsewhere
+            document.addEventListener('mousedown', function handler(e) {
+                if (!colorPopup.contains(e.target) && e.target !== colorBlock) {
+                    colorPopup.classList.remove('open');
+                }
+                if (!tooltip.contains(e.target) && !parentEl.contains(e.target)) {
+                    document.removeEventListener('mousedown', handler);
+                }
+            });
         }
 
+        // ─── Create text element (static display) ────────────────────────────────
         function createTextElement(data) {
             var el = document.createElement('div');
             el.className = 'text-annotation';
             el.dataset.id = data.id;
-            el.style.left = (data.x * 100) + '%';
-            el.style.top  = (data.y * 100) + '%';
-            el.style.fontSize = ((data.size || 14) * scale) + 'px';
+            el.style.left      = (data.x * 100) + '%';
+            el.style.top       = (data.y * 100) + '%';
+            el.style.fontSize  = ((data.size || 14) * scale) + 'px';
             el.style.fontFamily = data.font === 'Times' ? 'Times New Roman' : (data.font || 'Courier');
             el.style.fontWeight = data.isBold ? 'bold' : 'normal';
-            el.style.fontStyle = data.isItalic ? 'italic' : 'normal';
-            el.style.color = data.color || '#1a73e8';
-            el.style.width = data.w ? (data.w * 100) + '%' : 'auto';
-            el.style.maxWidth = data.maxW ? (data.maxW * 100) + '%' : '90%';
-            el.textContent = data.content;
+            el.style.fontStyle  = data.isItalic ? 'italic' : 'normal';
+            el.style.color      = data.color || '#1a73e8';
+            el.style.width      = data.w ? (data.w * 100) + '%' : 'auto';
+            el.style.maxWidth   = data.maxW ? (data.maxW * 100) + '%' : '90%';
+            el.textContent      = data.content;
 
-            var del = document.createElement('button');
-            del.className = 'ann-delete-badge';
-            del.innerHTML = '<i class="fas fa-times"></i>';
-            del.onclick = function (e) { e.stopPropagation(); deleteAnnotation(data.id); };
-            el.appendChild(del);
-
+            // Width resize handle
             var handle = document.createElement('div');
             handle.className = 'text-width-handle';
             handle.addEventListener('mousedown', function(e) {
@@ -685,23 +752,25 @@
             });
             el.appendChild(handle);
 
+            // Single click → open tooltip formatter
             el.addEventListener('click', function(e) {
                 e.stopPropagation();
                 if (currentTool === 'text') {
-                    convertTextToInput(el, data);
-                } else {
-                    if(activeTextId === data.id) {
-                        closeActiveTextOptions();
-                    } else {
-                        el.classList.add('text-annotation-editing');
-                        el.style.border = '1px dashed #1a73e8';
-                        attachTextFormatterTooltip(el, data);
-                    }
+                    if (e.target.closest('.text-width-handle')) return;
+                    el.classList.add('text-annotation-editing');
+                    el.style.border = '1px dashed rgba(26,115,232,0.6)';
+                    attachTextFormatterTooltip(el, data, null);
                 }
             });
 
+            // Double click → make editable
+            el.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                convertTextToInput(el, data);
+            });
+
             el.addEventListener('mousedown', function (e) {
-                if (e.target.closest('.ann-delete-badge') || e.target.closest('.text-formatter-tooltip') || e.target.closest('.text-width-handle') || e.target.tagName === 'INPUT') return;
+                if (e.target.closest('.text-formatter-tooltip') || e.target.closest('.text-width-handle') || e.target.tagName === 'INPUT') return;
                 e.stopPropagation();
                 startDrag(e, el, data, 'text');
             });
@@ -710,6 +779,7 @@
             return el;
         }
 
+        // ─── Convert static text to editable input ────────────────────────────────
         function convertTextToInput(el, data) {
             closeActiveTextOptions();
             el.innerHTML = '';
@@ -734,14 +804,14 @@
             el.appendChild(handle);
             attachTextFormatterTooltip(el, data, field);
 
-            requestAnimationFrame(() => { 
-                field.focus(); 
+            requestAnimationFrame(() => {
+                field.focus();
                 field.setSelectionRange(field.value.length, field.value.length);
             });
 
             function commitUpdatedData() {
                 var finalTxt = field.value.trim();
-                if(finalTxt) {
+                if (finalTxt) {
                     data.content = finalTxt;
                     renderAnnotations(currentPage);
                 } else {
@@ -755,13 +825,13 @@
                     commitUpdatedData();
                 }, 150);
             };
-
             field.onkeydown = function(ev) {
-                if(ev.key === 'Enter') commitUpdatedData();
-                if(ev.key === 'Escape') { renderAnnotations(currentPage); closeActiveTextOptions(); }
+                if (ev.key === 'Enter') { commitUpdatedData(); }
+                if (ev.key === 'Escape') { renderAnnotations(currentPage); closeActiveTextOptions(); }
             };
         }
 
+        // ─── Image element ────────────────────────────────────────────────────────
         function createImageElement(data) {
             var el = document.createElement('div');
             el.className = 'image-annotation';
@@ -783,10 +853,10 @@
 
             var rh = document.createElement('div');
             rh.className = 'resize-handle';
-            rh.addEventListener('mousedown', function (e) { 
-                e.stopPropagation(); 
+            rh.addEventListener('mousedown', function (e) {
+                e.stopPropagation();
                 e.preventDefault();
-                startResize(e, el, data); 
+                startResize(e, el, data);
             });
             el.appendChild(rh);
 
@@ -802,9 +872,9 @@
 
         function deleteAnnotation(id) {
             var anns = getAnnotations(currentPage);
-            anns.highlights = anns.highlights.filter(function (h) { return h.id !== id; });
-            anns.texts      = anns.texts.filter(function (t) { return t.id !== id; });
-            anns.images     = anns.images.filter(function (i) { return i.id !== id; });
+            anns.highlights = anns.highlights.filter(h => h.id !== id);
+            anns.texts      = anns.texts.filter(t => t.id !== id);
+            anns.images     = anns.images.filter(i => i.id !== id);
             renderAnnotations(currentPage);
             updateAnnCount();
         }
@@ -812,7 +882,7 @@
         function startDrag(e, el, data, type) {
             var rect = pageContainer.getBoundingClientRect();
             dragState = {
-                el: el, data: data, type: type,
+                el, data, type,
                 startMouseX: e.clientX, startMouseY: e.clientY,
                 origX: data.x, origY: data.y,
                 containerW: rect.width, containerH: rect.height,
@@ -822,12 +892,8 @@
 
         function startResize(e, el, data) {
             var rect = pageContainer.getBoundingClientRect();
-            globalIsResizingFlag = true; 
-            resizeState = {
-                el: el, data: data,
-                startMouseX: e.clientX,
-                origW: data.w, containerW: rect.width,
-            };
+            globalIsResizingFlag = true;
+            resizeState = { el, data, startMouseX: e.clientX, origW: data.w, containerW: rect.width };
             document.body.style.userSelect = 'none';
         }
 
@@ -835,8 +901,7 @@
             var rect = pageContainer.getBoundingClientRect();
             globalIsResizingFlag = true;
             textWidthResizeState = {
-                el: el, data: data,
-                startMouseX: e.clientX,
+                el, data, startMouseX: e.clientX,
                 origW: data.w || (el.offsetWidth / rect.width),
                 containerW: rect.width
             };
@@ -864,29 +929,19 @@
             }
         });
 
-        document.addEventListener('mouseup', function (e) {
-            if (dragState)   { document.body.style.userSelect = ''; dragState   = null; }
-            if (resizeState) { 
-                document.body.style.userSelect = ''; 
-                resizeState = null; 
-                setTimeout(() => { globalIsResizingFlag = false; }, 80);
-            }
-            if (textWidthResizeState) {
-                document.body.style.userSelect = '';
-                textWidthResizeState = null;
-                setTimeout(() => { globalIsResizingFlag = false; }, 80);
-            }
+        document.addEventListener('mouseup', function () {
+            if (dragState)   { document.body.style.userSelect = ''; dragState = null; }
+            if (resizeState) { document.body.style.userSelect = ''; resizeState = null; setTimeout(() => { globalIsResizingFlag = false; }, 80); }
+            if (textWidthResizeState) { document.body.style.userSelect = ''; textWidthResizeState = null; setTimeout(() => { globalIsResizingFlag = false; }, 80); }
         });
 
         textLayer.addEventListener('mouseup', function () {
             if (currentTool !== 'highlight') return;
             var sel = window.getSelection();
             if (!sel.rangeCount || sel.isCollapsed) return;
-
             var range = sel.getRangeAt(0);
             var clientRects = range.getClientRects();
             var pageRect = pageContainer.getBoundingClientRect();
-
             var rects = [];
             for (var i = 0; i < clientRects.length; i++) {
                 var r = clientRects[i];
@@ -900,8 +955,7 @@
             }
             sel.removeAllRanges();
             if (rects.length === 0) return;
-
-            getAnnotations(currentPage).highlights.push({ id: genId(), rects: rects, color: highlightColor });
+            getAnnotations(currentPage).highlights.push({ id: genId(), rects, color: highlightColor });
             renderAnnotations(currentPage);
             updateAnnCount();
         });
@@ -924,11 +978,12 @@
             var inputWrapper = document.createElement('div');
             inputWrapper.className = 'text-annotation text-annotation-editing';
             inputWrapper.style.left = (relX * 100) + '%';
-            inputWrapper.style.top = (relY * 100) + '%';
+            inputWrapper.style.top  = (relY * 100) + '%';
             inputWrapper.style.border = '1px dashed #1a73e8';
             inputWrapper.style.fontSize = (32 * scale) + 'px';
             inputWrapper.style.fontFamily = 'Courier';
             inputWrapper.style.width = '40%';
+            inputWrapper.style.color = '#1a73e8';
 
             var field = document.createElement('input');
             field.type = 'text';
@@ -938,73 +993,104 @@
             var handle = document.createElement('div');
             handle.className = 'text-width-handle';
             handle.style.display = 'block';
-            handle.addEventListener('mousedown', function(ex) {
-                ex.stopPropagation();
-                ex.preventDefault();
-                startTextWidthResize(ex, inputWrapper, mockData);
+            handle.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                startTextWidthResize(e, inputWrapper, mockData);
             });
 
             inputWrapper.appendChild(field);
             inputWrapper.appendChild(handle);
             annotationLayer.appendChild(inputWrapper);
-
             attachTextFormatterTooltip(inputWrapper, mockData, field);
-
-            field.oninput = function() {
-                inputWrapper.style.fontSize = (mockData.size * scale) + 'px'; 
-                inputWrapper.style.fontFamily = mockData.font === 'Times' ? 'Times New Roman' : mockData.font;
-                inputWrapper.style.fontWeight = mockData.isBold ? 'bold' : 'normal';
-                inputWrapper.style.fontStyle = mockData.isItalic ? 'italic' : 'normal';
-                inputWrapper.style.color = mockData.color;
-            };
 
             requestAnimationFrame(() => { field.focus(); });
 
-            function commitData() {
-                var finalTxt = field.value.trim();
+            function commitNew() {
+                var txt = field.value.trim();
                 inputWrapper.remove();
-                if(finalTxt) {
-                    mockData.content = finalTxt;
+                if (txt) {
+                    mockData.content = txt;
                     getAnnotations(currentPage).texts.push(mockData);
+                    updateAnnCount();
+                    renderAnnotations(currentPage);
+                } else {
+                    closeActiveTextOptions();
                 }
-                renderAnnotations(currentPage);
-                updateAnnCount();
             }
 
             field.onblur = function() {
                 setTimeout(() => {
                     if (document.activeElement === field || document.activeElement.closest('.text-formatter-tooltip')) return;
-                    commitData();
+                    commitNew();
                 }, 150);
             };
-
             field.onkeydown = function(ev) {
-                if(ev.key === 'Enter') commitData();
-                if(ev.key === 'Escape') { inputWrapper.remove(); closeActiveTextOptions(); }
+                if (ev.key === 'Enter') commitNew();
+                if (ev.key === 'Escape') { inputWrapper.remove(); closeActiveTextOptions(); }
             };
         });
 
-        pageContainer.addEventListener('click', function (e) {
-            if (currentTool !== 'image') return;
-            if (globalIsResizingFlag) return;
-            if (e.target.closest('.text-annotation') || e.target.closest('.image-annotation')) return;
+        // Tool switching
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tb-btn[data-tool]').forEach(b => b.classList.remove('active'));
+            var btn = document.querySelector('[data-tool="' + tool + '"]');
+            if (btn) btn.classList.add('active');
 
-            var rect = pageContainer.getBoundingClientRect();
-            imagePlacePos = {
-                x: (e.clientX - rect.left) / rect.width,
-                y: (e.clientY - rect.top)  / rect.height,
-            };
-            imageInput.click();
+            viewerArea.className = 'viewer-area tool-' + tool;
+
+            var hlSection = document.getElementById('highlight-colors-section');
+            hlSection.style.display = tool === 'highlight' ? 'block' : 'none';
+
+            if (tool === 'image') {
+                imagePlacePos = null;
+            }
+            closeActiveTextOptions();
+        }
+
+        document.querySelectorAll('.tb-btn[data-tool]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tool = btn.dataset.tool;
+                if (tool === 'image') {
+                    setTool('image');
+                    pageContainer.addEventListener('click', function onceClick(e) {
+                        if (e.target.closest('.text-annotation') || e.target.closest('.image-annotation')) return;
+                        var rect = pageContainer.getBoundingClientRect();
+                        imagePlacePos = {
+                            x: (e.clientX - rect.left) / rect.width,
+                            y: (e.clientY - rect.top) / rect.height
+                        };
+                        imageInput.click();
+                        pageContainer.removeEventListener('click', onceClick);
+                    }, { once: false });
+                } else {
+                    setTool(tool);
+                }
+            });
+        });
+
+        // Highlight color swatches in sidebar
+        colorGrid.innerHTML = '';
+        HIGHLIGHT_COLORS.forEach(function (c) {
+            var s = document.createElement('div');
+            s.className = 'color-swatch' + (c.color === highlightColor ? ' active' : '');
+            s.style.background = c.color;
+            s.title = c.name;
+            s.addEventListener('click', function () {
+                highlightColor = c.color;
+                colorGrid.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+                s.classList.add('active');
+            });
+            colorGrid.appendChild(s);
         });
 
         imageInput.addEventListener('change', function (e) {
             if (!e.target.files[0]) return;
             var file = e.target.files[0];
             if (!file.type.startsWith('image/')) return;
-
-            var pos = { x: imagePlacePos.x, y: imagePlacePos.y };
-            imageInput.value = '';         
-
+            var pos = { x: imagePlacePos ? imagePlacePos.x : 0.1, y: imagePlacePos ? imagePlacePos.y : 0.1 };
+            imageInput.value = '';
             var reader = new FileReader();
             reader.onload = function (ev) {
                 var src = ev.target.result;
@@ -1014,10 +1100,7 @@
                     var w = img.width / pageW;
                     var h = (img.height / img.width) * w;
                     if (w > 0.4) { w = 0.4; h = (img.height / img.width) * w; }
-
-                    getAnnotations(currentPage).images.push({
-                        id: genId(), x: pos.x, y: pos.y, w: w, h: h, src: src,
-                    });
+                    getAnnotations(currentPage).images.push({ id: genId(), x: pos.x, y: pos.y, w, h, src });
                     renderAnnotations(currentPage);
                     updateAnnCount();
                 };
@@ -1042,8 +1125,8 @@
             await renderPage(currentPage);
         }
 
-        document.getElementById('btn-zoom-in').addEventListener('click',  function () { setZoom(scale + 0.15); });
-        document.getElementById('btn-zoom-out').addEventListener('click', function () { setZoom(scale - 0.15); });
+        document.getElementById('btn-zoom-in').addEventListener('click',  () => setZoom(scale + 0.15));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(scale - 0.15));
         document.getElementById('btn-fit').addEventListener('click', fitToWidth);
 
         async function goToPage(num) {
@@ -1051,13 +1134,9 @@
             await renderPage(num);
         }
 
-        document.getElementById('btn-prev').addEventListener('click', function () {
-            if (currentPage > 1) goToPage(currentPage - 1);
-        });
-        document.getElementById('btn-next').addEventListener('click', function () {
-            if (currentPage < totalPages) goToPage(currentPage + 1);
-        });
-        pageInputEl.addEventListener('change', function () { goToPage(pageInputEl.value); });
+        document.getElementById('btn-prev').addEventListener('click', () => { if (currentPage > 1) goToPage(currentPage - 1); });
+        document.getElementById('btn-next').addEventListener('click', () => { if (currentPage < totalPages) goToPage(currentPage + 1); });
+        pageInputEl.addEventListener('change', () => goToPage(pageInputEl.value));
 
         document.getElementById('btn-clear-page').addEventListener('click', function () {
             annotations[currentPage] = { highlights: [], texts: [], images: [] };
@@ -1073,9 +1152,7 @@
 
         function extractCleanImageData(srcUrl) {
             return new Promise((resolve) => {
-                if (srcUrl.startsWith('data:image/jpeg') || srcUrl.startsWith('data:image/png')) {
-                    return resolve(srcUrl);
-                }
+                if (srcUrl.startsWith('data:image/jpeg') || srcUrl.startsWith('data:image/png')) return resolve(srcUrl);
                 const tempImg = new Image();
                 tempImg.crossOrigin = "anonymous";
                 tempImg.onload = function() {
@@ -1084,11 +1161,7 @@
                     canvas.height = tempImg.naturalHeight || tempImg.height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(tempImg, 0, 0);
-                    try {
-                        resolve(canvas.toDataURL('image/png'));
-                    } catch(err) {
-                        resolve(srcUrl);
-                    }
+                    try { resolve(canvas.toDataURL('image/png')); } catch(err) { resolve(srcUrl); }
                 };
                 tempImg.onerror = () => resolve(srcUrl);
                 tempImg.src = srcUrl;
@@ -1096,18 +1169,12 @@
         }
 
         document.getElementById('btn-export').addEventListener('click', async function () {
-            if (!base64BackupSource) {
-                showToast('No valid source file loaded', 'error');
-                return;
-            }
+            if (!base64BackupSource) { showToast('No valid source file loaded', 'error'); return; }
             showToast('Merging annotation vector layer grids...', 'info');
-
             try {
                 const binaryString = atob(base64BackupSource);
                 const recoveryBytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    recoveryBytes[i] = binaryString.charCodeAt(i);
-                }
+                for (let i = 0; i < binaryString.length; i++) recoveryBytes[i] = binaryString.charCodeAt(i);
 
                 const targetPdfDoc = await PDFLib.PDFDocument.load(recoveryBytes);
                 const pages = targetPdfDoc.getPages();
@@ -1116,18 +1183,15 @@
                     const pageNum = parseInt(indexStr);
                     const targetPage = pages[pageNum - 1];
                     if (!targetPage) continue;
-
                     const { width, height } = targetPage.getSize();
                     const pageAnns = annotations[pageNum];
 
-                    // Draw Highlights
                     if (pageAnns.highlights) {
                         for (let hl of pageAnns.highlights) {
                             const hex = hl.color.replace('#', '');
                             const r = parseInt(hex.substring(0, 2), 16) / 255;
                             const g = parseInt(hex.substring(2, 4), 16) / 255;
                             const b = parseInt(hex.substring(4, 6), 16) / 255;
-
                             for (let rect of hl.rects) {
                                 targetPage.drawRectangle({
                                     x: rect.x * width,
@@ -1141,7 +1205,6 @@
                         }
                     }
 
-                    // Draw Text (Fixed padding alignment)
                     if (pageAnns.texts) {
                         for (let txt of pageAnns.texts) {
                             let fontKey = PDFLib.StandardFonts.Courier;
@@ -1152,18 +1215,15 @@
                             } else {
                                 fontKey = txt.isBold ? (txt.isItalic ? PDFLib.StandardFonts.CourierBoldOblique : PDFLib.StandardFonts.CourierBold) : (txt.isItalic ? PDFLib.StandardFonts.CourierOblique : PDFLib.StandardFonts.Courier);
                             }
-                            
                             const embeddedFont = await targetPdfDoc.embedFont(fontKey);
                             const hex = (txt.color || '#1a73e8').replace('#', '');
                             const r = parseInt(hex.substring(0, 2), 16) / 255;
                             const g = parseInt(hex.substring(2, 4), 16) / 255;
                             const b = parseInt(hex.substring(4, 6), 16) / 255;
-                            
                             const fontSize = txt.size || 14;
-
                             targetPage.drawText(txt.content, {
-                                x: (txt.x * width) + 5, // Account for left padding
-                                y: height - (txt.y * height) - (fontSize * 1.15), // Adjust baseline for top padding
+                                x: (txt.x * width) + 5,
+                                y: height - (txt.y * height) - (fontSize * 1.15),
                                 size: fontSize,
                                 font: embeddedFont,
                                 color: PDFLib.rgb(r, g, b),
@@ -1172,28 +1232,22 @@
                         }
                     }
 
-                    // Draw Images (Fixed aspect ratio stretch)
                     if (pageAnns.images) {
                         for (let imgObj of pageAnns.images) {
                             try {
                                 const cleanImgSrc = await extractCleanImageData(imgObj.src);
-                                
-                                let embeddedImg = cleanImgSrc.includes('image/png') ? 
+                                let embeddedImg = cleanImgSrc.includes('image/png') ?
                                     await targetPdfDoc.embedPng(cleanImgSrc) : await targetPdfDoc.embedJpg(cleanImgSrc);
-
                                 const imgDims = embeddedImg.scale(1);
                                 const exportWidth = imgObj.w * width;
                                 const exportHeight = (imgDims.height / imgDims.width) * exportWidth;
-
                                 targetPage.drawImage(embeddedImg, {
                                     x: imgObj.x * width,
                                     y: height - (imgObj.y * height) - exportHeight,
                                     width: exportWidth,
                                     height: exportHeight,
                                 });
-                            } catch (e) { 
-                                console.error("Image embedding failed, skipping element:", e); 
-                            }
+                            } catch (e) { console.error("Image embedding failed:", e); }
                         }
                     }
                 }
@@ -1202,9 +1256,7 @@
                 const blob = new Blob([finalBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = 'annotated.pdf';
-                a.click();
+                a.href = url; a.download = 'annotated.pdf'; a.click();
                 showToast('Export successful!', 'success');
             } catch (err) {
                 console.error(err);
@@ -1213,7 +1265,7 @@
         });
 
         viewerArea.addEventListener('click', function(e) {
-            if(!e.target.closest('.text-annotation') && !e.target.closest('.text-formatter-tooltip')) {
+            if (!e.target.closest('.text-annotation') && !e.target.closest('.text-formatter-tooltip')) {
                 closeActiveTextOptions();
             }
         });

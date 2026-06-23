@@ -367,7 +367,7 @@
         let activeTextId = null;
         let globalIsResizingFlag = false; 
 
-        // DOM Elements MUST be defined before we attach listeners to them!
+        // Initialize DOM Elements
         const uploadScreen    = document.getElementById('upload-screen');
         const dropZone        = document.getElementById('drop-zone');
         const fileInput       = document.getElementById('file-input');
@@ -1120,6 +1120,7 @@
                     const { width, height } = targetPage.getSize();
                     const pageAnns = annotations[pageNum];
 
+                    // Draw Highlights
                     if (pageAnns.highlights) {
                         for (let hl of pageAnns.highlights) {
                             const hex = hl.color.replace('#', '');
@@ -1140,6 +1141,7 @@
                         }
                     }
 
+                    // Draw Text (Fixed padding alignment)
                     if (pageAnns.texts) {
                         for (let txt of pageAnns.texts) {
                             let fontKey = PDFLib.StandardFonts.Courier;
@@ -1160,8 +1162,8 @@
                             const fontSize = txt.size || 14;
 
                             targetPage.drawText(txt.content, {
-                                x: txt.x * width,
-                                y: height - (txt.y * height) - (fontSize * 0.85),
+                                x: (txt.x * width) + 5, // Account for left padding
+                                y: height - (txt.y * height) - (fontSize * 1.15), // Adjust baseline for top padding
                                 size: fontSize,
                                 font: embeddedFont,
                                 color: PDFLib.rgb(r, g, b),
@@ -1170,6 +1172,7 @@
                         }
                     }
 
+                    // Draw Images (Fixed aspect ratio stretch)
                     if (pageAnns.images) {
                         for (let imgObj of pageAnns.images) {
                             try {
@@ -1178,11 +1181,15 @@
                                 let embeddedImg = cleanImgSrc.includes('image/png') ? 
                                     await targetPdfDoc.embedPng(cleanImgSrc) : await targetPdfDoc.embedJpg(cleanImgSrc);
 
+                                const imgDims = embeddedImg.scale(1);
+                                const exportWidth = imgObj.w * width;
+                                const exportHeight = (imgDims.height / imgDims.width) * exportWidth;
+
                                 targetPage.drawImage(embeddedImg, {
                                     x: imgObj.x * width,
-                                    y: height - (imgObj.y * height) - (imgObj.h * height),
-                                    width: imgObj.w * width,
-                                    height: imgObj.h * height,
+                                    y: height - (imgObj.y * height) - exportHeight,
+                                    width: exportWidth,
+                                    height: exportHeight,
                                 });
                             } catch (e) { 
                                 console.error("Image embedding failed, skipping element:", e); 

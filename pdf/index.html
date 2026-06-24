@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- FIX 3: Dynamic highlight selection colour – updated by JS whenever user picks a swatch -->
+<style id="hl-sel-style">.tool-highlight .text-layer ::selection{background:rgba(245,158,11,0.45);}</style>
 <style>
 :root{--bg:#0f0f0f;--sidebar:#1a1a1a;--surface:#242424;--surface-2:#2e2e2e;--border:#333;--text:#e8e8e8;--text-muted:#777;--accent:#f59e0b;--accent-hover:#d97706;--accent-glow:rgba(245,158,11,0.12);--danger:#ef4444;--success:#22c55e;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -30,7 +32,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 #app.active{display:flex;}
 
 /* ── Toolbar ── */
-.toolbar{height:50px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:6px;flex-shrink:0;}
+.toolbar{height:50px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:6px;flex-shrink:0;overflow:visible;z-index:200;}
 .toolbar .logo{font-weight:700;font-size:15px;color:var(--accent);margin-right:12px;letter-spacing:-0.5px;white-space:nowrap;}
 .toolbar .divider{width:1px;height:26px;background:var(--border);margin:0 3px;flex-shrink:0;}
 .tb-btn{min-width:34px;height:34px;border:none;background:transparent;color:var(--text-muted);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.15s;position:relative;padding:0 6px;gap:5px;white-space:nowrap;}
@@ -66,7 +68,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .page-thumb-drag{opacity:0.5;border:2px dashed var(--accent)!important;}
 .page-thumb-drop-over{border-color:var(--success)!important;}
 
-/* ── Sidebar (right controls) - removed, moved to toolbar ── */
+/* ── Sidebar ── */
 .sidebar{width:0;display:none;}
 
 /* ── Color grid for highlight ── */
@@ -80,6 +82,19 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .hl-popover{position:absolute;top:calc(100% + 6px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;z-index:600;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:none;}
 .hl-popover.open{display:block;}
 
+/* ── FIX 1: Symbol Picker – now a fixed-position overlay anchored via JS ── */
+.symbol-picker{position:fixed;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;z-index:9000;box-shadow:0 8px 28px rgba(0,0,0,0.65);display:none;min-width:300px;}
+.symbol-picker.open{display:block;}
+.symbol-picker-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:8px;font-weight:600;}
+.symbol-grid{display:grid;grid-template-columns:repeat(8,32px);gap:4px;}
+
+/* Symbol size row inside picker */
+.sym-size-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid #2a2a2a;}
+.sym-size-row label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.8px;white-space:nowrap;}
+.sym-size-slider{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--border);border-radius:2px;cursor:pointer;outline:none;}
+.sym-size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.sym-size-label{font-size:11px;color:var(--text-muted);min-width:28px;text-align:right;}
+
 /* ── Viewer ── */
 .viewer-area{flex:1;overflow:auto!important;display:block;padding:24px;background:var(--bg);}
 .viewer-area::-webkit-scrollbar{width:8px;height:8px;}
@@ -91,7 +106,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* ── Text Layer ── */
 .text-layer{position:absolute;text-align:initial;inset:0;overflow:hidden;opacity:0.22;line-height:1;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;}
 .text-layer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;}
-.tool-highlight .text-layer ::selection{background:rgba(245,158,11,0.45);}
+/* highlight ::selection colour is set dynamically via #hl-sel-style */
 .tool-highlight .text-layer{opacity:0.22;cursor:text;pointer-events:auto;}
 .tool-hand .text-layer,.tool-text .text-layer,.tool-image .text-layer,.tool-symbol .text-layer{pointer-events:none;}
 .tool-text .page-container,.tool-image .page-container,.tool-symbol .page-container{cursor:crosshair;}
@@ -122,41 +137,39 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .color-popup{position:absolute;bottom:calc(100% + 6px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:9px;display:none;flex-direction:column;gap:7px;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,0.65);min-width:165px;}
 .color-popup.open{display:flex;}
 .color-popup-swatches{display:grid;grid-template-columns:repeat(6,22px);gap:4px;}
-.color-popup-swatch{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s,border-color 0.1s;}
+.color-popup-swatch{width:22px;height:22px;border-radius:5px;border:2px solid transparent;cursor:pointer;transition:transform 0.1s;}
 .color-popup-swatch:hover{transform:scale(1.15);}
 .color-popup-swatch.selected{border-color:#fff;}
-.color-popup-native-row{display:flex;align-items:center;gap:6px;border-top:1px solid #333;padding-top:7px;font-size:11px;color:#888;}
-.color-popup-native-row label{cursor:pointer;flex:1;}
-.color-popup-native-input{width:22px;height:22px;border:none;padding:0;background:none;cursor:pointer;border-radius:3px;}
+.color-popup-hex{display:flex;gap:5px;align-items:center;}
+.color-popup-hex input[type=color]{width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;}
+.color-popup-hex input[type=text]{flex:1;background:#222;border:1px solid #333;border-radius:5px;color:#fff;font-size:11px;padding:3px 6px;outline:none;font-family:monospace;}
 
 /* ── Symbol Annotation ── */
 .symbol-annotation{position:absolute;pointer-events:auto;cursor:move;user-select:none;line-height:1;display:flex;align-items:center;justify-content:center;}
 .symbol-annotation:hover .sym-del{display:flex;}
-.sym-del{position:absolute;top:-8px;right:-8px;width:16px;height:16px;background:#ef4444;border:none;border-radius:50%;color:#fff;font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;}
+.sym-del{position:absolute;top:-7px;right:-7px;width:16px;height:16px;background:var(--danger);border:none;border-radius:50%;color:#fff;font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;}
+/* FIX 2: symbol resize handle identical to image */
+.sym-resize-handle{position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;background:var(--accent);border-radius:2px;border:2px solid var(--bg);cursor:nwse-resize;display:none;z-index:10;}
+.symbol-annotation:hover .sym-resize-handle{display:block;}
 
-/* ── Symbol Picker Panel ── */
-.symbol-picker{position:absolute;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px;z-index:600;box-shadow:0 8px 28px rgba(0,0,0,0.65);display:none;min-width:260px;}
-.symbol-picker.open{display:block;}
-.symbol-picker-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:8px;font-weight:600;}
-.symbol-grid{display:grid;grid-template-columns:repeat(8,30px);gap:4px;}
-.sym-btn{width:30px;height:30px;background:#222;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.1s;color:#ddd;}
-.sym-btn:hover{background:#333;border-color:#555;transform:scale(1.1);}
+/* ── Sym Btn ── */
+.sym-btn{width:30px;height:30px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;}
+.sym-btn:hover{background:var(--surface-2);border-color:var(--accent);}
+.sym-btn.selected{background:rgba(245,158,11,0.15);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
 
-/* ── Width Handle ── */
-.text-width-handle{position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:#f59e0b;border:2px solid #fff;cursor:e-resize;display:none;z-index:600;box-shadow:0 1px 4px rgba(0,0,0,0.4);pointer-events:auto;}
-.text-annotation-editing .text-width-handle{display:block;}
-
-/* ── Image nodes ── */
-.image-annotation{position:absolute;pointer-events:auto;cursor:move;border:2px solid transparent;border-radius:5px;transition:border-color 0.15s;}
-.image-annotation:hover{border-color:var(--accent);}
-.image-annotation img{display:block;width:100%;height:100%;object-fit:fill;border-radius:3px;pointer-events:none;}
-.image-annotation .ann-delete{position:absolute;top:-9px;right:-9px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;border:2px solid var(--bg);font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+/* ── Image Annotation ── */
+.image-annotation{position:absolute;pointer-events:auto;cursor:move;user-select:none;}
+.image-annotation img{display:block;width:100%;pointer-events:none;border-radius:2px;}
 .image-annotation:hover .ann-delete{display:flex;}
-.resize-handle{position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;background:var(--accent);border-radius:2px;border:2px solid var(--bg);cursor:nwse-resize;display:none;}
 .image-annotation:hover .resize-handle{display:block;}
+.ann-delete{position:absolute;top:-7px;right:-7px;width:18px;height:18px;background:var(--danger);border:none;border-radius:50%;color:#fff;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10;}
+.resize-handle{position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;background:var(--accent);border-radius:2px;border:2px solid var(--bg);cursor:nwse-resize;display:none;}
 
-/* ── Text Input ── */
-.text-input-overlay-box{border:none!important;background:transparent!important;outline:none!important;padding:0!important;margin:0!important;color:inherit!important;font-family:inherit!important;font-size:inherit!important;font-weight:inherit!important;font-style:inherit!important;width:100%;display:inline-block;box-shadow:none!important;}
+/* ── Text Input Overlay ── */
+.text-input-overlay-box{background:transparent;border:none;outline:none;width:100%;font-family:inherit;font-size:inherit;font-weight:inherit;font-style:inherit;color:inherit;cursor:text;}
+.text-width-handle{position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:#f59e0b;border:2px solid #fff;cursor:e-resize;display:none;z-index:600;box-shadow:0 1px 4px rgba(0,0,0,0.4);pointer-events:auto;}
+
+/* ── Hidden ── */
 .hidden-input{display:none;}
 
 /* ── Status Bar ── */
@@ -226,14 +239,11 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   <div class="toolbar">
     <div class="logo"><i class="fas fa-file-pdf" style="margin-right:5px;"></i>PDF Annotator</div>
     <div class="divider"></div>
-
-    <!-- Open -->
     <button class="tb-btn" id="btn-open" title="Open PDF"><i class="fas fa-folder-open"></i></button>
     <input type="file" accept=".pdf,application/pdf" class="hidden-input" id="file-input-2">
     <div class="divider"></div>
-
-    <!-- Tools -->
     <button class="tb-btn active" data-tool="hand" id="tool-hand" title="Hand (H)"><i class="fas fa-hand"></i></button>
+    <!-- Highlight button with inline popover (unchanged) -->
     <button class="tb-btn" data-tool="highlight" id="tool-highlight" title="Highlight (L)" style="position:relative;">
       <i class="fas fa-highlighter"></i>
       <div class="hl-popover" id="hl-popover">
@@ -242,21 +252,14 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       </div>
     </button>
     <button class="tb-btn" data-tool="text" id="tool-text" title="Insert Text (T)"><i class="fas fa-font"></i></button>
-    <button class="tb-btn" data-tool="symbol" id="tool-symbol" title="Insert Symbol (S)" style="position:relative;">
+    <!-- FIX 1: symbol button has NO child panel anymore; panel is in body -->
+    <button class="tb-btn" data-tool="symbol" id="tool-symbol" title="Insert Symbol (S)">
       <i class="fas fa-check-square"></i>
-      <div class="symbol-picker" id="symbol-picker-panel">
-        <div class="symbol-picker-title">Special Symbols</div>
-        <div class="symbol-grid" id="symbol-grid"></div>
-      </div>
     </button>
     <button class="tb-btn" data-tool="image" id="tool-image" title="Insert Image (I)"><i class="fas fa-image"></i></button>
     <div class="divider"></div>
-
-    <!-- Page Manager -->
     <button class="tb-btn" id="btn-page-manager" title="Page Manager — Add, Remove, Reorder"><i class="fas fa-layer-group"></i><span style="font-size:11px;">Pages</span></button>
     <div class="divider"></div>
-
-    <!-- Right side -->
     <div class="toolbar-right">
       <span id="ann-count" style="font-size:11px;color:var(--text-muted);margin-right:4px;"></span>
       <button class="tb-btn danger-btn" id="btn-clear-page" title="Clear Page Annotations"><i class="fas fa-eraser"></i></button>
@@ -270,7 +273,6 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
   <!-- Content -->
   <div class="content">
-    <!-- Page Panel -->
     <div class="page-panel">
       <div class="page-panel-header">
         <span class="page-panel-label">Pages</span>
@@ -281,8 +283,6 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
       </div>
       <div class="page-thumbs" id="page-thumbs"></div>
     </div>
-
-    <!-- Viewer -->
     <div class="viewer-area tool-hand" id="viewer-area">
       <div class="page-container" id="page-container">
         <canvas id="pdf-canvas"></canvas>
@@ -310,6 +310,18 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   </div>
 </div>
 
+<!-- FIX 1: Symbol Picker Panel – lives in <body>, positioned via JS -->
+<div class="symbol-picker" id="symbol-picker-panel">
+  <div class="symbol-picker-title">Special Symbols — click one then click on PDF</div>
+  <div class="symbol-grid" id="symbol-grid"></div>
+  <!-- FIX 2: Symbol size slider inside picker -->
+  <div class="sym-size-row">
+    <label>Size</label>
+    <input type="range" class="sym-size-slider" id="sym-size-slider" min="10" max="96" value="24">
+    <span class="sym-size-label" id="sym-size-label">24px</span>
+  </div>
+</div>
+
 <!-- Page Manager Modal -->
 <div class="modal-overlay" id="page-modal">
   <div class="modal-box">
@@ -321,20 +333,27 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     <div class="modal-pages-grid" id="modal-pages-grid"></div>
     <div class="modal-actions">
       <button class="modal-btn primary" id="modal-add-blank"><i class="fas fa-plus"></i>Add Blank Page</button>
-      <button class="modal-btn danger" id="modal-delete-current"><i class="fas fa-trash"></i>Delete Current Page</button>
+      <button class="modal-btn" id="modal-close-btn">Close</button>
     </div>
   </div>
 </div>
 
-<div class="toast-container" id="toast-container"></div>
+<!-- Image input -->
 <input type="file" accept="image/*" class="hidden-input" id="image-input">
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 const HIGHLIGHT_COLORS = [
-  {name:'Yellow',color:'#fbbf24'},{name:'Green',color:'#4ade80'},
-  {name:'Blue',color:'#60a5fa'},{name:'Pink',color:'#f472b6'},
-  {name:'Orange',color:'#fb923c'},{name:'Purple',color:'#c084fc'},
+  {name:'Yellow',   color:'#fde047'},
+  {name:'Green',    color:'#86efac'},
+  {name:'Cyan',     color:'#67e8f9'},
+  {name:'Pink',     color:'#f9a8d4'},
+  {name:'Orange',   color:'#fdba74'},
+  {name:'Purple',   color:'#d8b4fe'},
+  {name:'Red',      color:'#fca5a5'},
+  {name:'Blue',     color:'#93c5fd'},
 ];
 
 const TEXT_COLORS = [
@@ -385,14 +404,16 @@ let isRendering = false;
 let pendingPage = null;
 let dragState = null;
 let resizeState = null;
+let symResizeState = null;   // FIX 2: separate resize state for symbols
 let textWidthResizeState = null;
 let imagePlacePos = null;
 let activeTextId = null;
 let globalIsResizingFlag = false;
-// Page reorder state
-let pageOrder = []; // array of 1-based original page indices (or 'blank_N')
+let pageOrder = [];
 let blankPageCount = 0;
 let thumbDragSrc = null;
+let pendingSymbol = null;
+let pendingSymbolSize = 24;  // FIX 2: current size from slider
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const uploadScreen    = document.getElementById('upload-screen');
@@ -420,6 +441,9 @@ const hlPopover       = document.getElementById('hl-popover');
 const symbolPanel     = document.getElementById('symbol-picker-panel');
 const pageModal       = document.getElementById('page-modal');
 const modalPagesGrid  = document.getElementById('modal-pages-grid');
+const symSizeSlider   = document.getElementById('sym-size-slider');
+const symSizeLabel    = document.getElementById('sym-size-label');
+const hlSelStyle      = document.getElementById('hl-sel-style');
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function genId() { return 'ann_' + (nextId++); }
@@ -428,15 +452,11 @@ function getAnnotations(page) {
   if (!annotations[page].symbols) annotations[page].symbols = [];
   return annotations[page];
 }
-function countAllAnnotations() {
-  return Object.values(annotations).reduce((s,a) =>
-    s + a.highlights.length + a.texts.length + a.images.length + (a.symbols||[]).length, 0);
-}
 function updateAnnCount() {
-  const n = countAllAnnotations();
-  const t = n > 0 ? n + ' annotation' + (n>1?'s':'') : '';
-  annCountEl.textContent = t;
-  annCountStatus.textContent = t;
+  const total = Object.values(annotations).reduce((s,a) =>
+    s + a.highlights.length + a.texts.length + a.images.length + (a.symbols||[]).length, 0);
+  annCountEl.textContent = total ? total + ' annotation' + (total>1?'s':'') : '';
+  annCountStatus.textContent = annCountEl.textContent;
 }
 function showToast(msg, type='info') {
   const icons = {success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
@@ -500,9 +520,7 @@ async function renderPage(displayNum) {
   try {
     const sourceIdx = pageOrder[displayNum - 1];
     let viewport, ctx;
-
     if (typeof sourceIdx === 'string' && sourceIdx.startsWith('blank')) {
-      // Blank page
       const blankW = 595, blankH = 842;
       const w = blankW * scale, h = blankH * scale;
       pageContainer.style.width = w + 'px';
@@ -519,7 +537,6 @@ async function renderPage(displayNum) {
       pdfCanvas.width = viewport.width; pdfCanvas.height = viewport.height;
       ctx = pdfCanvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
-
       textLayer.innerHTML = '';
       textLayer.style.width = viewport.width + 'px';
       textLayer.style.height = viewport.height + 'px';
@@ -527,13 +544,10 @@ async function renderPage(displayNum) {
       const textContent = await page.getTextContent();
       pdfjsLib.renderTextLayer({ textContentSource: textContent, container: textLayer, viewport, textDivs: [] });
     }
-
     renderAnnotations(displayNum);
     sbPageInput.value = displayNum;
     currentPage = displayNum;
     updateAnnCount();
-
-    // Highlight active thumb
     document.querySelectorAll('.page-thumb').forEach((t,i) => t.classList.toggle('active', i+1 === displayNum));
   } catch(e) { console.error(e); }
   isRendering = false;
@@ -551,7 +565,6 @@ async function renderPageThumbs() {
     const wrap = document.createElement('div');
     wrap.className = 'page-thumb' + (displayNum === currentPage ? ' active' : '');
     wrap.dataset.display = displayNum;
-
     const thumbCanvas = document.createElement('canvas');
     if (typeof sourceIdx === 'string' && sourceIdx.startsWith('blank')) {
       thumbCanvas.width = 90; thumbCanvas.height = 127;
@@ -567,19 +580,16 @@ async function renderPageThumbs() {
       } catch(e) {}
     }
     wrap.appendChild(thumbCanvas);
-
     const numEl = document.createElement('div');
     numEl.className = 'thumb-num';
     numEl.textContent = displayNum;
     wrap.appendChild(numEl);
-
     const delBtn = document.createElement('button');
     delBtn.className = 'thumb-del';
     delBtn.innerHTML = '<i class="fas fa-times"></i>';
     delBtn.title = 'Delete page';
     delBtn.addEventListener('click', e => { e.stopPropagation(); deletePage(displayNum); });
     wrap.appendChild(delBtn);
-
     wrap.addEventListener('click', () => goToPage(displayNum));
     wrap.draggable = true;
     wrap.addEventListener('dragstart', e => { thumbDragSrc = displayNum; e.dataTransfer.effectAllowed = 'move'; wrap.classList.add('page-thumb-drag'); });
@@ -607,11 +617,9 @@ function deletePage(displayNum) {
   if (pageOrder.length <= 1) { showToast('Cannot delete last page', 'error'); return; }
   const key = pageOrder[displayNum - 1];
   pageOrder.splice(displayNum - 1, 1);
-  // remap annotations
   const newAnnotations = {};
   Object.keys(annotations).forEach(k => {
-    const oldKey = k; // 'page_X'
-    if (k === 'page_' + key) return; // deleted
+    if (k === 'page_' + key) return;
     newAnnotations[k] = annotations[k];
   });
   annotations = newAnnotations;
@@ -626,7 +634,6 @@ function reorderPage(fromDisplay, toDisplay) {
   const item = pageOrder.splice(fromDisplay - 1, 1)[0];
   pageOrder.splice(toDisplay - 1, 0, item);
   renderPageThumbs().then(() => {
-    // stay on the moved page
     const newPos = pageOrder.indexOf(item) + 1;
     goToPage(newPos);
   });
@@ -638,7 +645,6 @@ function renderAnnotations(displayNum) {
   annotationLayer.innerHTML = '';
   const key = pageKey(displayNum);
   const anns = annotations[key] || getAnnotations(key);
-
   anns.highlights.forEach(hl => {
     hl.rects.forEach(r => {
       const div = document.createElement('div');
@@ -647,15 +653,9 @@ function renderAnnotations(displayNum) {
       annotationLayer.appendChild(div);
     });
   });
-
   anns.texts.forEach(t => createTextElement(t));
   anns.images.forEach(img => createImageElement(img));
   (anns.symbols||[]).forEach(s => createSymbolElement(s));
-}
-
-function getPageAnnotations(displayPage) {
-  const key = pageKey(displayPage);
-  return getAnnotations(key);
 }
 
 function closeActiveTextOptions() {
@@ -671,7 +671,6 @@ function closeActiveTextOptions() {
 function buildColorPopup(currentColor, onChange) {
   const popup = document.createElement('div');
   popup.className = 'color-popup';
-
   const grid = document.createElement('div');
   grid.className = 'color-popup-swatches';
   TEXT_COLORS.forEach(hex => {
@@ -683,37 +682,45 @@ function buildColorPopup(currentColor, onChange) {
       e.preventDefault(); e.stopPropagation();
       grid.querySelectorAll('.color-popup-swatch').forEach(s => s.classList.remove('selected'));
       sw.classList.add('selected');
+      hexInput.value = hex;
+      colorInput.value = hex;
       onChange(hex);
       popup.classList.remove('open');
     });
     grid.appendChild(sw);
   });
-
-  const nativeRow = document.createElement('div');
-  nativeRow.className = 'color-popup-native-row';
-  const lbl = document.createElement('label');
-  lbl.textContent = 'Custom…';
-  const ni = document.createElement('input');
-  ni.type = 'color'; ni.className = 'color-popup-native-input'; ni.value = currentColor;
-  ni.addEventListener('input', e => { e.stopPropagation(); onChange(ni.value); });
-  ni.addEventListener('change', e => { e.stopPropagation(); onChange(ni.value); popup.classList.remove('open'); });
-  lbl.appendChild(ni);
-  nativeRow.appendChild(lbl);
-
+  const hexRow = document.createElement('div');
+  hexRow.className = 'color-popup-hex';
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color';
+  colorInput.value = currentColor;
+  const hexInput = document.createElement('input');
+  hexInput.type = 'text';
+  hexInput.value = currentColor;
+  hexInput.maxLength = 7;
+  colorInput.addEventListener('input', () => {
+    hexInput.value = colorInput.value;
+    onChange(colorInput.value);
+  });
+  hexInput.addEventListener('change', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) {
+      colorInput.value = hexInput.value;
+      onChange(hexInput.value);
+    }
+  });
+  hexRow.appendChild(colorInput);
+  hexRow.appendChild(hexInput);
   popup.appendChild(grid);
-  popup.appendChild(nativeRow);
+  popup.appendChild(hexRow);
   return popup;
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
+// ── Attach Text Formatter Tooltip ─────────────────────────────────────────────
 function attachTextFormatterTooltip(parentEl, data, targetField) {
   parentEl.querySelectorAll('.text-formatter-tooltip').forEach(t => t.remove());
-  activeTextId = data.id;
-
   const tooltip = document.createElement('div');
   tooltip.className = 'text-formatter-tooltip';
 
-  // Font
   const fontSelect = document.createElement('select');
   fontSelect.className = 'font-select';
   ['Times','Helvetica','Courier'].forEach(f => {
@@ -722,25 +729,22 @@ function attachTextFormatterTooltip(parentEl, data, targetField) {
     if ((data.font||'Times') === f) o.selected = true;
     fontSelect.appendChild(o);
   });
-  fontSelect.onchange = e => {
-    e.stopPropagation();
+  fontSelect.onchange = () => {
     data.font = fontSelect.value;
-    const fam = data.font === 'Times' ? 'Times New Roman' : data.font;
-    parentEl.style.fontFamily = fam;
-    if (targetField) targetField.style.fontFamily = fam;
+    const ff = fontSelect.value === 'Times' ? 'Times New Roman' : fontSelect.value;
+    parentEl.style.fontFamily = ff;
+    if (targetField) targetField.style.fontFamily = ff;
   };
 
-  // Size
   const sizeSelect = document.createElement('select');
   sizeSelect.className = 'size-select';
-  [8,10,12,14,16,18,24,32,48].forEach(s => {
+  [8,9,10,11,12,14,16,18,20,24,28,32,36,48,72].forEach(sz => {
     const o = document.createElement('option');
-    o.value = s+'px'; o.textContent = s;
-    if ((data.size||12) === s) o.selected = true;
+    o.value = sz; o.textContent = sz + 'pt';
+    if ((data.size||12) === sz) o.selected = true;
     sizeSelect.appendChild(o);
   });
-  sizeSelect.onchange = e => {
-    e.stopPropagation();
+  sizeSelect.onchange = () => {
     data.size = parseInt(sizeSelect.value);
     parentEl.style.fontSize = (data.size * scale) + 'px';
     if (targetField) targetField.style.fontSize = (data.size * scale) + 'px';
@@ -748,24 +752,22 @@ function attachTextFormatterTooltip(parentEl, data, targetField) {
 
   const d1 = document.createElement('div'); d1.className = 'divider';
 
-  // Bold
   const btnBold = document.createElement('button');
   btnBold.className = 'style-btn' + (data.isBold ? ' active' : '');
-  btnBold.innerHTML = '<i class="fas fa-bold"></i>';
-  btnBold.onclick = e => {
-    e.stopPropagation();
+  btnBold.innerHTML = '<b>B</b>';
+  btnBold.title = 'Bold';
+  btnBold.onclick = () => {
     data.isBold = !data.isBold;
     parentEl.style.fontWeight = data.isBold ? 'bold' : 'normal';
     if (targetField) targetField.style.fontWeight = data.isBold ? 'bold' : 'normal';
     btnBold.classList.toggle('active');
   };
 
-  // Italic
   const btnItalic = document.createElement('button');
   btnItalic.className = 'style-btn' + (data.isItalic ? ' active' : '');
-  btnItalic.innerHTML = '<i class="fas fa-italic"></i>';
-  btnItalic.onclick = e => {
-    e.stopPropagation();
+  btnItalic.innerHTML = '<i>I</i>';
+  btnItalic.title = 'Italic';
+  btnItalic.onclick = () => {
     data.isItalic = !data.isItalic;
     parentEl.style.fontStyle = data.isItalic ? 'italic' : 'normal';
     if (targetField) targetField.style.fontStyle = data.isItalic ? 'italic' : 'normal';
@@ -774,7 +776,6 @@ function attachTextFormatterTooltip(parentEl, data, targetField) {
 
   const d2 = document.createElement('div'); d2.className = 'divider';
 
-  // Color
   const colorBlock = document.createElement('div');
   colorBlock.className = 'color-picker-block';
   colorBlock.style.backgroundColor = data.color || '#000000';
@@ -795,7 +796,6 @@ function attachTextFormatterTooltip(parentEl, data, targetField) {
 
   const d3 = document.createElement('div'); d3.className = 'divider';
 
-  // Delete
   const btnDel = document.createElement('button');
   btnDel.className = 'delete-btn';
   btnDel.title = 'Delete text';
@@ -805,14 +805,11 @@ function attachTextFormatterTooltip(parentEl, data, targetField) {
   tooltip.append(fontSelect, sizeSelect, d1, btnBold, btnItalic, d2, colorBlock, d3, btnDel);
   parentEl.appendChild(tooltip);
 
-  // Auto-flip if tooltip overflows top
   requestAnimationFrame(() => {
     const tipRect = tooltip.getBoundingClientRect();
     if (tipRect.top < 0) {
       tooltip.style.bottom = 'auto';
       tooltip.style.top = 'calc(100% + 8px)';
-      tooltip.style.setProperty('--arrow-top', 'auto');
-      tooltip.querySelector(':after') && Object.assign(tooltip.style, { '--flip': '1' });
     }
   });
 
@@ -843,7 +840,6 @@ function createTextElement(data) {
   handle.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); startTextWidthResize(e, el, data); });
   el.appendChild(handle);
 
-  // Single click when text tool active → show tooltip
   el.addEventListener('click', e => {
     e.stopPropagation();
     if (currentTool === 'text' && !e.target.closest('.text-width-handle')) {
@@ -853,7 +849,6 @@ function createTextElement(data) {
     }
   });
 
-  // Double-click → make editable (any tool)
   el.addEventListener('dblclick', e => { e.stopPropagation(); convertTextToInput(el, data); });
 
   el.addEventListener('mousedown', e => {
@@ -885,10 +880,7 @@ function convertTextToInput(el, data) {
 
   el.appendChild(field);
   el.appendChild(handle);
-
-  // Show tooltip immediately on editing
   attachTextFormatterTooltip(el, data, field);
-
   requestAnimationFrame(() => { field.focus(); field.setSelectionRange(field.value.length, field.value.length); });
 
   function commit() {
@@ -907,7 +899,7 @@ function convertTextToInput(el, data) {
   };
 }
 
-// ── Symbol Element ────────────────────────────────────────────────────────────
+// ── Symbol Element (FIX 2: resize handle added) ───────────────────────────────
 function createSymbolElement(data) {
   const el = document.createElement('div');
   el.className = 'symbol-annotation';
@@ -916,6 +908,8 @@ function createSymbolElement(data) {
   el.style.top      = (data.y * 100) + '%';
   el.style.fontSize = ((data.size || 24) * scale) + 'px';
   el.style.color    = data.color || '#000000';
+  el.style.width    = ((data.size || 24) * scale) + 'px';
+  el.style.height   = ((data.size || 24) * scale) + 'px';
   el.textContent    = data.sym;
 
   const delBtn = document.createElement('button');
@@ -924,8 +918,17 @@ function createSymbolElement(data) {
   delBtn.onclick = e => { e.stopPropagation(); deleteAnnotation(data.id); };
   el.appendChild(delBtn);
 
+  // FIX 2: resize handle
+  const rh = document.createElement('div');
+  rh.className = 'sym-resize-handle';
+  rh.addEventListener('mousedown', e => {
+    e.stopPropagation(); e.preventDefault();
+    startSymResize(e, el, data);
+  });
+  el.appendChild(rh);
+
   el.addEventListener('mousedown', e => {
-    if (e.target.closest('.sym-del')) return;
+    if (e.target.closest('.sym-del') || e.target.closest('.sym-resize-handle')) return;
     e.stopPropagation();
     startDrag(e, el, data, 'symbol');
   });
@@ -991,6 +994,12 @@ function startResize(e, el, data) {
   resizeState = { el, data, startMouseX:e.clientX, origW:data.w, containerW:rect.width };
   document.body.style.userSelect = 'none';
 }
+// FIX 2: symbol resize by px size
+function startSymResize(e, el, data) {
+  globalIsResizingFlag = true;
+  symResizeState = { el, data, startMouseX:e.clientX, startMouseY:e.clientY, origSize: data.size || 24 };
+  document.body.style.userSelect = 'none';
+}
 function startTextWidthResize(e, el, data) {
   const rect = pageContainer.getBoundingClientRect();
   globalIsResizingFlag = true;
@@ -1012,6 +1021,17 @@ document.addEventListener('mousemove', e => {
     resizeState.data.w = Math.max(0.05, resizeState.origW + rdx);
     resizeState.el.style.width = (resizeState.data.w * 100) + '%';
   }
+  // FIX 2: symbol resize mousemove
+  if (symResizeState) {
+    const dx = e.clientX - symResizeState.startMouseX;
+    const dy = e.clientY - symResizeState.startMouseY;
+    const delta = dx + dy;
+    const newSize = Math.max(8, Math.min(200, symResizeState.origSize + delta * 0.5));
+    symResizeState.data.size = newSize;
+    symResizeState.el.style.fontSize = (newSize * scale) + 'px';
+    symResizeState.el.style.width    = (newSize * scale) + 'px';
+    symResizeState.el.style.height   = (newSize * scale) + 'px';
+  }
   if (textWidthResizeState) {
     const tdx = (e.clientX - textWidthResizeState.startMouseX) / textWidthResizeState.containerW;
     textWidthResizeState.data.w = Math.max(0.05, textWidthResizeState.origW + tdx);
@@ -1022,6 +1042,7 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseup', () => {
   if (dragState) { document.body.style.userSelect = ''; dragState = null; }
   if (resizeState) { document.body.style.userSelect = ''; resizeState = null; setTimeout(() => { globalIsResizingFlag = false; }, 80); }
+  if (symResizeState) { document.body.style.userSelect = ''; symResizeState = null; setTimeout(() => { globalIsResizingFlag = false; }, 80); }
   if (textWidthResizeState) { document.body.style.userSelect = ''; textWidthResizeState = null; setTimeout(() => { globalIsResizingFlag = false; }, 80); }
 });
 
@@ -1057,7 +1078,15 @@ pageContainer.addEventListener('click', e => {
   const relX = (e.clientX - rect.left) / rect.width;
   const relY = (e.clientY - rect.top)  / rect.height;
 
-  if (currentTool === 'symbol') return; // handled by symbol panel
+  if (currentTool === 'symbol') {
+    if (!pendingSymbol) return;
+    const key = pageKey(currentPage);
+    const symData = { id:genId(), x:relX, y:relY, sym:pendingSymbol, size:pendingSymbolSize, color:'#000000' };
+    getAnnotations(key).symbols.push(symData);
+    renderAnnotations(currentPage);
+    updateAnnCount();
+    return;
+  }
 
   // Text tool
   const tempId = genId();
@@ -1079,10 +1108,7 @@ pageContainer.addEventListener('click', e => {
   inputWrapper.appendChild(field);
   inputWrapper.appendChild(handle);
   annotationLayer.appendChild(inputWrapper);
-
-  // Show tooltip immediately when text box appears
   attachTextFormatterTooltip(inputWrapper, mockData, field);
-
   requestAnimationFrame(() => field.focus());
 
   function commitNew() {
@@ -1109,10 +1135,7 @@ pageContainer.addEventListener('click', e => {
   };
 });
 
-// ── Symbol picker ─────────────────────────────────────────────────────────────
-// Built in toolbar button, clicking symbol on canvas inserts via panel
-let pendingSymbol = null;
-
+// ── FIX 1: Symbol Picker – populate grid, position panel via JS ───────────────
 SYMBOLS.forEach(s => {
   const btn = document.createElement('button');
   btn.className = 'sym-btn';
@@ -1120,27 +1143,39 @@ SYMBOLS.forEach(s => {
   btn.title = s.title;
   btn.addEventListener('mousedown', e => {
     e.stopPropagation();
+    symbolGrid.querySelectorAll('.sym-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
     pendingSymbol = s.sym;
+    showToast('Click on PDF to place ' + s.title, 'info');
     symbolPanel.classList.remove('open');
   });
   symbolGrid.appendChild(btn);
 });
 
-pageContainer.addEventListener('click', e => {
-  if (currentTool !== 'symbol' || !pendingSymbol) return;
-  if (e.target.closest('.symbol-annotation')) return;
-  const rect = pageContainer.getBoundingClientRect();
-  const relX = (e.clientX - rect.left) / rect.width;
-  const relY = (e.clientY - rect.top)  / rect.height;
-  const key = pageKey(currentPage);
-  const symData = { id:genId(), x:relX, y:relY, sym:pendingSymbol, size:24, color:'#000000' };
-  getAnnotations(key).symbols.push(symData);
-  renderAnnotations(currentPage);
-  updateAnnCount();
-  // keep pendingSymbol so user can place multiple
+// FIX 2: Symbol size slider
+symSizeSlider.addEventListener('input', () => {
+  pendingSymbolSize = parseInt(symSizeSlider.value);
+  symSizeLabel.textContent = pendingSymbolSize + 'px';
 });
 
-// ── Highlight Color Swatches ──────────────────────────────────────────────────
+// FIX 1: Position the symbol panel below the toolbar button using getBoundingClientRect
+function openSymbolPanel() {
+  const btn = document.getElementById('tool-symbol');
+  const btnRect = btn.getBoundingClientRect();
+  symbolPanel.style.left = btnRect.left + 'px';
+  symbolPanel.style.top  = (btnRect.bottom + 6) + 'px';
+  symbolPanel.classList.add('open');
+}
+
+// ── FIX 3: Highlight Color Swatches – update dynamic <style> tag ──────────────
+function updateHlSelStyle(color) {
+  // Convert hex to rgba with 0.45 opacity for selection highlight
+  const r = parseInt(color.slice(1,3),16);
+  const g = parseInt(color.slice(3,5),16);
+  const b = parseInt(color.slice(5,7),16);
+  hlSelStyle.textContent = `.tool-highlight .text-layer ::selection{background:rgba(${r},${g},${b},0.45);}`;
+}
+
 HIGHLIGHT_COLORS.forEach(c => {
   const s = document.createElement('div');
   s.className = 'color-swatch' + (c.color === highlightColor ? ' active' : '');
@@ -1149,11 +1184,15 @@ HIGHLIGHT_COLORS.forEach(c => {
   s.addEventListener('click', e => {
     e.stopPropagation();
     highlightColor = c.color;
+    updateHlSelStyle(c.color);  // FIX 3
     colorGrid.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
     s.classList.add('active');
   });
   colorGrid.appendChild(s);
 });
+
+// Initialise with default color
+updateHlSelStyle(highlightColor);
 
 // ── Tool Switching ────────────────────────────────────────────────────────────
 function setTool(tool) {
@@ -1176,8 +1215,10 @@ document.querySelectorAll('.tb-btn[data-tool]').forEach(btn => {
       return;
     }
     if (tool === 'symbol') {
+      const wasOpen = symbolPanel.classList.contains('open');
       setTool('symbol');
-      symbolPanel.classList.toggle('open');
+      if (!wasOpen) openSymbolPanel(); // FIX 1: use positioned open
+      else symbolPanel.classList.remove('open');
       return;
     }
     if (tool === 'image') {
@@ -1198,7 +1239,9 @@ document.querySelectorAll('.tb-btn[data-tool]').forEach(btn => {
 // Close popovers when clicking outside
 document.addEventListener('click', e => {
   if (!e.target.closest('[data-tool="highlight"]')) hlPopover.classList.remove('open');
-  if (!e.target.closest('[data-tool="symbol"]')) { symbolPanel.classList.remove('open'); }
+  if (!e.target.closest('[data-tool="symbol"]') && !e.target.closest('#symbol-picker-panel')) {
+    symbolPanel.classList.remove('open');
+  }
   if (!e.target.closest('.text-annotation') && !e.target.closest('.text-formatter-tooltip')) closeActiveTextOptions();
 });
 
@@ -1214,12 +1257,12 @@ imageInput.addEventListener('change', e => {
     const src = ev.target.result;
     const img = new Image();
     img.onload = () => {
-      const pageW = pageContainer.offsetWidth;
-      let w = img.width / pageW;
-      let h = (img.height / img.width) * w;
-      if (w > 0.4) { w = 0.4; h = (img.height / img.width) * w; }
+      const containerW = pageContainer.offsetWidth;
+      const naturalAR  = img.naturalWidth / img.naturalHeight;
+      const defaultW   = Math.min(0.4, (img.naturalWidth / containerW));
+      const imgData = { id:genId(), x:pos.x, y:pos.y, src, w:defaultW, ar:naturalAR };
       const key = pageKey(currentPage);
-      getAnnotations(key).images.push({ id:genId(), x:pos.x, y:pos.y, w, h, src });
+      getAnnotations(key).images.push(imgData);
       renderAnnotations(currentPage);
       updateAnnCount();
     };
@@ -1228,71 +1271,63 @@ imageInput.addEventListener('change', e => {
   reader.readAsDataURL(file);
 });
 
-// ── Zoom / Navigate ───────────────────────────────────────────────────────────
-async function setZoom(newScale) {
-  scale = Math.max(0.25, Math.min(4, newScale));
-  const pct = Math.round(scale * 100);
-  sbZoomLabel.textContent = pct + '%';
-  zoomSlider.value = pct;
-  if (pdfDoc) await renderPage(currentPage);
-}
-async function fitToWidth() {
-  if (!pdfDoc) return;
-  const sourceIdx = pageOrder[currentPage - 1];
-  let nativeW = 595;
-  if (typeof sourceIdx !== 'string') {
-    const pg = await pdfDoc.getPage(sourceIdx);
-    nativeW = pg.getViewport({scale:1}).width;
-  }
-  const available = viewerArea.clientWidth - 60;
-  scale = Math.max(0.25, Math.min(4, available / nativeW));
-  const pct = Math.round(scale * 100);
-  sbZoomLabel.textContent = pct + '%';
-  zoomSlider.value = pct;
-  await renderPage(currentPage);
-}
-async function goToPage(num) {
-  num = Math.max(1, Math.min(pageOrder.length, parseInt(num)||1));
-  await renderPage(num);
+// ── Navigation ────────────────────────────────────────────────────────────────
+function goToPage(n) {
+  n = Math.max(1, Math.min(pageOrder.length, n));
+  renderPage(n);
 }
 
+document.getElementById('sb-prev').addEventListener('click', () => { if(currentPage>1) goToPage(currentPage-1); });
+document.getElementById('sb-next').addEventListener('click', () => { if(currentPage<pageOrder.length) goToPage(currentPage+1); });
+sbPageInput.addEventListener('change', () => goToPage(parseInt(sbPageInput.value)||1));
+
+// ── Zoom ──────────────────────────────────────────────────────────────────────
+function setZoom(newScale) {
+  scale = Math.max(0.25, Math.min(4, newScale));
+  zoomSlider.value = Math.round(scale * 100);
+  sbZoomLabel.textContent = Math.round(scale * 100) + '%';
+  renderPage(currentPage);
+}
+async function fitToWidth() {
+  if (!pdfDoc && pageOrder.length === 0) return;
+  const availW = viewerArea.clientWidth - 48;
+  let pageW = 595;
+  const sourceIdx = pageOrder[currentPage - 1];
+  if (typeof sourceIdx !== 'string') {
+    try { const pg = await pdfDoc.getPage(sourceIdx); pageW = pg.getViewport({scale:1}).width; } catch(e){}
+  }
+  setZoom(availW / pageW);
+}
+
+zoomSlider.addEventListener('input', () => setZoom(parseInt(zoomSlider.value) / 100));
 document.getElementById('sb-zoom-in').addEventListener('click', () => setZoom(scale + 0.15));
 document.getElementById('sb-zoom-out').addEventListener('click', () => setZoom(scale - 0.15));
 document.getElementById('sb-fit').addEventListener('click', fitToWidth);
-document.getElementById('sb-prev').addEventListener('click', () => { if(currentPage>1) goToPage(currentPage-1); });
-document.getElementById('sb-next').addEventListener('click', () => { if(currentPage<pageOrder.length) goToPage(currentPage+1); });
-sbPageInput.addEventListener('change', () => goToPage(sbPageInput.value));
-zoomSlider.addEventListener('input', () => setZoom(parseInt(zoomSlider.value) / 100));
 
-// Scroll wheel zoom (Ctrl + scroll)
-viewerArea.addEventListener('wheel', e => {
-  if (e.ctrlKey) {
-    e.preventDefault();
-    setZoom(scale + (e.deltaY < 0 ? 0.1 : -0.1));
-  }
-}, { passive: false });
-
-// ── Clear ─────────────────────────────────────────────────────────────────────
+// ── Clear / Page Manager ──────────────────────────────────────────────────────
 document.getElementById('btn-clear-page').addEventListener('click', () => {
   const key = pageKey(currentPage);
   annotations[key] = { highlights:[], texts:[], images:[], symbols:[] };
   renderAnnotations(currentPage);
   updateAnnCount();
+  showToast('Page annotations cleared', 'info');
 });
 document.getElementById('btn-clear-all').addEventListener('click', () => {
   annotations = {};
   renderAnnotations(currentPage);
   updateAnnCount();
+  showToast('All annotations cleared', 'info');
 });
 
-// ── Page Manager ──────────────────────────────────────────────────────────────
 document.getElementById('btn-page-manager').addEventListener('click', openPageModal);
-document.getElementById('pp-add').addEventListener('click', () => addBlankPage(currentPage));
 document.getElementById('pp-manage').addEventListener('click', openPageModal);
+document.getElementById('pp-add').addEventListener('click', () => addBlankPage(currentPage));
 document.getElementById('modal-close').addEventListener('click', () => pageModal.classList.remove('open'));
+document.getElementById('modal-close-btn').addEventListener('click', () => pageModal.classList.remove('open'));
 document.getElementById('modal-add-blank').addEventListener('click', () => { addBlankPage(currentPage); openPageModal(); });
-document.getElementById('modal-delete-current').addEventListener('click', () => { deletePage(currentPage); pageModal.classList.remove('open'); });
 
+// ── Page Modal ────────────────────────────────────────────────────────────────
+let modalDragSrc = null;
 async function openPageModal() {
   pageModal.classList.add('open');
   modalPagesGrid.innerHTML = '';
@@ -1302,37 +1337,36 @@ async function openPageModal() {
     const wrap = document.createElement('div');
     wrap.className = 'modal-page-thumb' + (displayNum === currentPage ? ' active' : '');
     wrap.dataset.display = displayNum;
+    wrap.draggable = true;
 
-    const tc = document.createElement('canvas');
-    if (typeof sourceIdx === 'string') {
-      tc.width = 100; tc.height = 141;
-      const ctx = tc.getContext('2d');
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,100,141);
-      ctx.strokeStyle = '#ccc'; ctx.strokeRect(0,0,100,141);
+    const thumbCanvas = document.createElement('canvas');
+    if (typeof sourceIdx === 'string' && sourceIdx.startsWith('blank')) {
+      thumbCanvas.width = 100; thumbCanvas.height = 141;
+      const tc = thumbCanvas.getContext('2d');
+      tc.fillStyle = '#fff'; tc.fillRect(0,0,100,141);
+      tc.strokeStyle = '#ccc'; tc.strokeRect(1,1,98,139);
     } else {
       try {
         const pg = await pdfDoc.getPage(sourceIdx);
         const vp = pg.getViewport({ scale: 100 / pg.getViewport({scale:1}).width });
-        tc.width = vp.width; tc.height = vp.height;
-        await pg.render({ canvasContext: tc.getContext('2d'), viewport: vp }).promise;
+        thumbCanvas.width = vp.width; thumbCanvas.height = vp.height;
+        await pg.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: vp }).promise;
       } catch(e) {}
     }
-    wrap.appendChild(tc);
+    wrap.appendChild(thumbCanvas);
 
     const numEl = document.createElement('div');
     numEl.className = 'mpt-num';
     numEl.textContent = 'Page ' + displayNum;
     wrap.appendChild(numEl);
 
-    const del = document.createElement('button');
-    del.className = 'mpt-del';
-    del.innerHTML = '<i class="fas fa-trash"></i>';
-    del.addEventListener('click', e => { e.stopPropagation(); deletePage(displayNum); openPageModal(); });
-    wrap.appendChild(del);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'mpt-del';
+    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); deletePage(displayNum); pageModal.classList.remove('open'); });
+    wrap.appendChild(delBtn);
 
     wrap.addEventListener('click', () => { goToPage(displayNum); pageModal.classList.remove('open'); });
-    wrap.draggable = true;
-    let modalDragSrc = null;
     wrap.addEventListener('dragstart', e => { modalDragSrc = displayNum; e.dataTransfer.effectAllowed = 'move'; });
     wrap.addEventListener('dragover', e => { e.preventDefault(); wrap.classList.add('drag-over'); });
     wrap.addEventListener('dragleave', () => wrap.classList.remove('drag-over'));
@@ -1378,7 +1412,6 @@ document.getElementById('btn-export').addEventListener('click', async () => {
     const bin = atob(base64BackupSource);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-
     const targetDoc = await PDFLib.PDFDocument.load(bytes);
     const origPages = targetDoc.getPages();
     const newDoc = await PDFLib.PDFDocument.create();
@@ -1387,21 +1420,17 @@ document.getElementById('btn-export').addEventListener('click', async () => {
       const displayNum = i + 1;
       const sourceIdx = pageOrder[i];
       let page;
-
       if (typeof sourceIdx === 'string') {
-        // blank page
         page = newDoc.addPage([595, 842]);
       } else {
         const [copied] = await newDoc.copyPages(targetDoc, [sourceIdx - 1]);
         page = newDoc.addPage(copied);
       }
-
       const { width, height } = page.getSize();
       const key = pageKey(displayNum);
       const pageAnns = annotations[key];
       if (!pageAnns) continue;
 
-      // Highlights
       for (const hl of pageAnns.highlights||[]) {
         const hex = hl.color.replace('#','');
         const r=parseInt(hex.substring(0,2),16)/255, g=parseInt(hex.substring(2,4),16)/255, b=parseInt(hex.substring(4,6),16)/255;
@@ -1410,7 +1439,6 @@ document.getElementById('btn-export').addEventListener('click', async () => {
         }
       }
 
-      // Text
       for (const txt of pageAnns.texts||[]) {
         let fontKey = PDFLib.StandardFonts.TimesRoman;
         if (txt.font==='Helvetica') fontKey = txt.isBold?(txt.isItalic?PDFLib.StandardFonts.HelveticaBoldOblique:PDFLib.StandardFonts.HelveticaBold):(txt.isItalic?PDFLib.StandardFonts.HelveticaOblique:PDFLib.StandardFonts.Helvetica);
@@ -1423,9 +1451,7 @@ document.getElementById('btn-export').addEventListener('click', async () => {
         page.drawText(txt.content, { x:(txt.x*width)+4, y:height-(txt.y*height)-(fs*1.15), size:fs, font, color:PDFLib.rgb(r,g,b), maxWidth:txt.w?txt.w*width:undefined });
       }
 
-      // Symbols
       for (const sym of pageAnns.symbols||[]) {
-        // Render symbol to a small canvas, embed as image
         const symCanvas = document.createElement('canvas');
         const symSize = (sym.size||24) * 3;
         symCanvas.width = symSize; symCanvas.height = symSize;
@@ -1443,7 +1469,6 @@ document.getElementById('btn-export').addEventListener('click', async () => {
         } catch(err) { console.warn('Symbol embed failed:', err); }
       }
 
-      // Images
       for (const imgObj of pageAnns.images||[]) {
         try {
           const clean = await extractCleanImageData(imgObj.src);
@@ -1469,17 +1494,25 @@ document.getElementById('btn-export').addEventListener('click', async () => {
 });
 
 // ── Keyboard Shortcuts ────────────────────────────────────────────────────────
+// FIX 4: skip all shortcuts when text tool is active (user is typing)
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+  if (currentTool === 'text') return;  // FIX 4: disable shortcuts while text tool active
   switch(e.key.toLowerCase()) {
     case 'h': setTool('hand'); break;
     case 'l': setTool('highlight'); break;
     case 't': setTool('text'); break;
     case 'i': setTool('image'); break;
-    case 's': setTool('symbol'); symbolPanel.classList.toggle('open'); break;
+    case 's': setTool('symbol'); openSymbolPanel(); break;
     case 'arrowleft': if(currentPage>1) goToPage(currentPage-1); break;
     case 'arrowright': if(currentPage<pageOrder.length) goToPage(currentPage+1); break;
-    case 'escape': pageModal.classList.remove('open'); closeActiveTextOptions(); symbolPanel.classList.remove('open'); hlPopover.classList.remove('open'); break;
+    case 'escape':
+      pageModal.classList.remove('open');
+      closeActiveTextOptions();
+      symbolPanel.classList.remove('open');
+      hlPopover.classList.remove('open');
+      if (currentTool !== 'hand') setTool('hand');
+      break;
   }
   if ((e.ctrlKey||e.metaKey) && e.key==='+') { e.preventDefault(); setZoom(scale+0.15); }
   if ((e.ctrlKey||e.metaKey) && e.key==='-') { e.preventDefault(); setZoom(scale-0.15); }

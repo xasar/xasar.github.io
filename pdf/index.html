@@ -972,7 +972,7 @@
             var tempId = genId();
             var mockData = {
                 id: tempId, x: relX, y: relY, content: '',
-                font: 'Courier', size: 32, isBold: false, isItalic: false, color: '#1a73e8', w: 0.4
+                font: 'Times', size: 12, isBold: false, isItalic: false, color: '#000', w: 0.4
             };
 
             var inputWrapper = document.createElement('div');
@@ -980,10 +980,10 @@
             inputWrapper.style.left = (relX * 100) + '%';
             inputWrapper.style.top  = (relY * 100) + '%';
             inputWrapper.style.border = '1px dashed #1a73e8';
-            inputWrapper.style.fontSize = (32 * scale) + 'px';
-            inputWrapper.style.fontFamily = 'Courier';
+            inputWrapper.style.fontSize = (12 * scale) + 'px';
+            inputWrapper.style.fontFamily = 'Times';
             inputWrapper.style.width = '40%';
-            inputWrapper.style.color = '#1a73e8';
+            inputWrapper.style.color = '#000';
 
             var field = document.createElement('input');
             field.type = 'text';

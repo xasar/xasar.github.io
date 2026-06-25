@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>rent-tracker-ui</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;
+  --white:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --light-muted:#9ca3af;
+  --border:#e5e7eb;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --green-border:#bbf7d0;
+  --green-accent:#22c55e;
+  --red:#dc2626;
+  --red-bg:#fff1f2;
+  --red-border:#fecdd3;
+  --blue:#2563eb;
+  --blue-bg:#eff6ff;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 14px rgba(0,0,0,0.04);
+  --shadow-nav:0 -1px 0 #e5e7eb,0 -4px 16px rgba(0,0,0,0.04);
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+button,input,select{font:inherit;color:inherit;}
+button{cursor:pointer;border:none;background:none;}
+.shell{width:min(430px,100vw);min-height:100vh;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:18px 20px 0;}
+.topbar-date{font-size:12px;color:var(--muted);margin-bottom:2px;}
+.topbar-brand{font-size:19px;font-weight:800;letter-spacing:-.03em;margin-bottom:14px;}
+
+/* ── MONTH NAV ── */
+.month-nav{display:flex;align-items:center;justify-content:center;gap:20px;padding:4px 0 14px;}
+.m-arrow{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted);background:#f3f4f6;flex-shrink:0;}
+.m-arrow:hover{background:var(--border);color:var(--text);}
+.m-label{font-size:16px;font-weight:700;letter-spacing:-.02em;min-width:130px;text-align:center;}
+
+/* ── SUMMARY ── */
+.summary-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
+.sum-card{border-radius:var(--r);padding:14px 14px 12px;flex:1;}
+.sum-card.green{background:var(--green-bg);border:1px solid var(--green-border);}
+.sum-card.red{background:var(--red-bg);border:1px solid var(--red-border);}
+.sum-hd{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;margin-bottom:6px;}
+.sum-hd.green{color:var(--green);}
+.sum-hd.red{color:var(--red);}
+.sum-val{font-size:22px;font-weight:800;letter-spacing:-.04em;line-height:1.1;}
+.sum-val.green{color:var(--green);}
+.sum-val.red{color:var(--red);}
+.sum-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;}
+.scroll-area{flex:1;overflow-y:auto;padding:14px 14px 120px;}
+
+/* ── SECTION LABEL ── */
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:4px 0 10px;}
+
+/* ── RENT CARDS (dashboard) ── */
+.rent-item{background:var(--white);border-radius:var(--r);padding:14px 14px 14px 16px;margin-bottom:8px;display:grid;grid-template-columns:32px 1fr auto;gap:0 12px;align-items:center;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;}
+.rent-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.rent-item.paid::before{background:var(--green-accent);}
+.rent-item.pend::before{background:var(--red);}
+.rent-item.paid{background:linear-gradient(to right,#f5fffb,var(--white));}
+.rent-item.pend{background:linear-gradient(to right,#fff5f5,var(--white));}
+.ri-icon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;}
+.ri-icon.paid{background:var(--green-bg);color:var(--green);}
+.ri-icon.pend{background:var(--red-bg);color:var(--red);}
+.ri-name{font-size:14px;font-weight:700;letter-spacing:-.01em;margin-bottom:2px;}
+.ri-sub{font-size:11px;color:var(--muted);line-height:1.5;}
+.ri-right{text-align:right;}
+.ri-amt{font-size:15px;font-weight:800;letter-spacing:-.02em;}
+.ri-amt.green{color:var(--green);}
+.ri-amt.red{color:var(--red);}
+.ri-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-top:4px;}
+.ri-badge.paid{background:var(--green-bg);color:var(--green);}
+.ri-badge.pend{background:var(--red-bg);color:var(--red);cursor:pointer;}
+
+/* ── TENANT CARDS ── */
+.tenant-item{background:var(--white);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border:1px solid var(--border);}
+.t-head{display:flex;align-items:flex-start;gap:12px;}
+.t-avatar{width:42px;height:42px;border-radius:12px;background:var(--blue-bg);color:var(--blue);display:grid;place-items:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.t-info{flex:1;min-width:0;}
+.t-name{font-size:14px;font-weight:700;letter-spacing:-.01em;}
+.t-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.55;}
+.t-rent{font-size:14px;font-weight:800;color:var(--blue);white-space:nowrap;background:var(--blue-bg);padding:5px 10px;border-radius:10px;text-align:right;}
+.t-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.ta-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:10px;font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;}
+.ta-btn.danger{background:var(--red-bg);color:var(--red);}
+
+/* ── ADD TENANT BOTTOM STRIP ── */
+.add-tenant-strip{position:fixed;bottom:calc(62px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(430px,100vw);padding:10px 16px;background:rgba(244,246,251,.96);backdrop-filter:blur(10px);border-top:1px solid var(--border);z-index:40;display:none;}
+.add-tenant-strip.visible{display:block;}
+.add-tenant-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:var(--r);background:#111827;color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;}
+.add-tenant-btn:hover{background:#1f2937;}
+
+/* ── HISTORY ── */
+.month-block{background:var(--white);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);}
+.mb-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.mb-title{font-size:14px;font-weight:700;}
+.mb-sub{font-size:11px;color:var(--muted);}
+.tx-row{padding:11px 14px;display:grid;grid-template-columns:4px 1fr auto;gap:0 12px;align-items:center;border-bottom:1px solid #f9fafb;}
+.tx-row:last-child{border-bottom:none;}
+.tx-bar{width:4px;height:32px;border-radius:4px;flex-shrink:0;}
+.tx-bar.green{background:var(--green-accent);}
+.tx-bar.red{background:var(--red);}
+.tx-name{font-size:13px;font-weight:600;}
+.tx-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.tx-amt{font-size:13px;font-weight:800;}
+.tx-amt.green{color:var(--green);}
+.tx-amt.red{color:var(--red);}
+
+/* ── SETTINGS ── */
+.settings-group{background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);}
+.settings-row{padding:15px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-lbl{font-size:14px;font-weight:600;}
+.settings-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.settings-btn{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:#f3f4f6;color:var(--text);}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100vw);background:rgba(255,255,255,.97);box-shadow:var(--shadow-nav);display:grid;grid-template-columns:1fr 1fr 1fr;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:50;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--light-muted);padding:0 8px;}
+.nav-item svg{width:22px;height:22px;}
+.nav-item.active{color:var(--blue);}
+.nav-center{position:relative;top:-10px;}
+.nav-center-bg{width:52px;height:52px;border-radius:50%;background:var(--blue);display:grid;place-items:center;box-shadow:0 6px 18px rgba(37,99,235,.4);color:#fff;}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(10,12,20,.5);display:none;align-items:flex-end;justify-content:center;z-index:80;}
+.modal-bg.open{display:flex;}
+.modal-box{width:min(430px,100vw);background:#fff;border-radius:24px 24px 0 0;padding:14px 20px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;}
+.modal-handle{width:40px;height:5px;background:var(--border);border-radius:99px;margin:2px auto 16px;}
+.modal-title{font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.field input,.field select{width:100%;padding:13px 14px;background:#f3f5f8;border:none;border-radius:12px;font-size:14px;outline:none;}
+.field input:focus,.field select:focus{box-shadow:0 0 0 2px rgba(37,99,235,.25);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.mbtn{padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;}
+.mbtn.cancel{background:#f3f4f6;color:#374151;}
+.mbtn.primary{background:var(--blue);color:#fff;}
+.empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;}
+
+@media(max-width:360px){
+  .summary-row,.row2,.modal-btns{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOP -->
+  <div class="topbar">
+    <div class="topbar-date" id="topDate"></div>
+    <div class="topbar-brand">Rent Tracker</div>
+    <div class="month-nav">
+      <button class="m-arrow" id="prevMonth" aria-label="Previous month">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="m-label" id="monthLabel"></div>
+      <button class="m-arrow" id="nextMonth" aria-label="Next month">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card green">
+        <div class="sum-hd green">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Collected
+        </div>
+        <div class="sum-val green" id="sumCollected">Rs 0</div>
+        <div class="sum-sub" id="sumCollectedSub">0 payments · 0%</div>
+      </div>
+      <div class="sum-card red">
+        <div class="sum-hd red">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Outstanding
+        </div>
+        <div class="sum-val red" id="sumOutstanding">Rs 0</div>
+        <div class="sum-sub" id="sumOutstandingSub">0 payments remaining</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div id="dash-paid"></div>
+      <div id="dash-pend"></div>
+    </div>
+
+    <!-- TENANTS -->
+    <div class="page" id="page-tenants">
+      <div id="tenantList"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="sec-label" style="margin-top:2px;">Security</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <div>
+            <div class="settings-lbl">Change PIN</div>
+            <div class="settings-sub">4-digit PIN to protect the app</div>
+          </div>
+          <button class="settings-btn" id="changePinBtn">Edit PIN</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD TENANT STRIP (only visible on tenants page) -->
+<div class="add-tenant-strip" id="addTenantStrip">
+  <button class="add-tenant-btn" id="addTenantBtn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    Add new tenant
+  </button>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item" data-page="tenants">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      <path d="M21 21v-2a4 4 0 0 0-3-3.85"/>
+    </svg>
+    <span>Tenants</span>
+  </button>
+  <button class="nav-item nav-center active" data-page="dashboard">
+    <div class="nav-center-bg">
+      <!-- Dashboard grid icon (4 squares) matching the reference image -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    </div>
+    <span style="color:var(--blue);font-weight:700;margin-top:4px;">Dashboard</span>
+  </button>
+  <button class="nav-item" data-page="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- MODAL: Add/Edit Tenant -->
+<div class="modal-bg" id="tenantModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="tenantModalTitle">Add tenant</div>
+    <input type="hidden" id="tid">
+    <div class="field"><label>Full name</label><input id="tName" placeholder="e.g. Robert Brown"></div>
+    <div class="field"><label>Business / property name</label><input id="tBiz" placeholder="e.g. Pine Road Suites"></div>
+    <div class="field"><label>Unit / Room</label><input id="tUnit" placeholder="e.g. Unit 7B"></div>
+    <div class="field"><label>Mobile</label><input id="tMobile" placeholder="+92 300 1234567"></div>
+    <div class="row2">
+      <div class="field"><label>Monthly rent (Rs)</label><input id="tRent" type="number" placeholder="9000"></div>
+      <div class="field"><label>Rent applies from</label><input id="tRentFrom" type="month"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Join month</label><input id="tJoin" type="month"></div>
+      <div class="field"><label>Leave month (if left)</label><input id="tLeave" type="month"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" id="closeTenantModal">Cancel</button>
+      <button class="mbtn primary" id="saveTenantBtn">Save tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Payment -->
+<div class="modal-bg" id="payModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Record payment</div>
+    <div class="field"><label>Tenant</label><input id="payName" disabled></div>
+    <div class="row2">
+      <div class="field"><label>Month</label><input id="payMonth" type="month"></div>
+      <div class="field"><label>Amount (Rs)</label><input id="payAmount" type="number"></div>
+    </div>
+    <div class="field"><label>Payment method</label>
+      <select id="payMethod"><option value="bank">Bank transfer</option><option value="cash">Cash</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" id="closePayModal">Cancel</button>
+      <button class="mbtn primary" id="savePayBtn">Confirm payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PIN -->
+<div class="modal-bg" id="pinModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Change PIN</div>
+    <div class="field"><label>New 4-digit PIN</label><input id="pinInput" maxlength="4" inputmode="numeric" placeholder="····"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" id="closePinModal">Cancel</button>
+      <button class="mbtn primary" id="savePinBtn">Save PIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB='https://rent-tracker-5d4b1-default-rtdb.asia-southeast1.firebasedatabase.app';
+const S={tenants:{},payments:{},settings:{},payTenant:null,viewMonth:new Date().toISOString().slice(0,7)};
+const $=id=>document.getElementById(id);
+const fmt=v=>'Rs '+Number(v||0).toLocaleString();
+const fmtM=m=>{if(!m)return'-';const[y,mo]=m.split('-').map(Number);return new Date(y,mo-1,1).toLocaleString('en-US',{month:'long',year:'numeric'});};
+const nowMonth=()=>new Date().toISOString().slice(0,7);
+const initials=n=>(n||'T').split(' ').filter(Boolean).slice(0,2).map(v=>v[0].toUpperCase()).join('');
+const pKey=(id,m)=>`${id}_${m}`;
+const cmpM=(a,b)=>a.localeCompare(b);
+
+function openM(id){$(id).classList.add('open');}
+function closeM(id){$(id).classList.remove('open');}
+
+async function fbGet(p=''){try{const r=await fetch(`${DB}/${p}.json`);return await r.json();}catch{return null;}}
+async function fbPatch(p,d){try{await fetch(`${DB}/${p}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});}catch(e){console.error(e);}}
+async function fbPut(p,d){try{await fetch(`${DB}/${p}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});}catch(e){console.error(e);}}
+
+// ── month arithmetic: works correctly for all months including December→January
+function monthAdd(m,delta){
+  const[y,mo]=m.split('-').map(Number);
+  const d=new Date(y,mo-1+delta,1);
+  const ny=d.getFullYear();
+  const nm=String(d.getMonth()+1).padStart(2,'0');
+  return `${ny}-${nm}`;
+}
+
+function rentFor(t,month){
+  const h=[...(Array.isArray(t.rentHistory)?t.rentHistory:[])];
+  if(!h.length)return Number(t.rent||0);
+  h.sort((a,b)=>a.from.localeCompare(b.from));
+  let amt=Number(h[0].amount||0);
+  for(const e of h)if(cmpM(e.from,month)<=0)amt=Number(e.amount||0);
+  return amt;
+}
+
+function setRentHist(t,rent,fromM){
+  const h=Array.isArray(t.rentHistory)?[...t.rentHistory]:[];
+  const i=h.findIndex(x=>x.from===fromM);
+  if(i>=0)h[i].amount=Number(rent);else h.push({from:fromM,amount:Number(rent)});
+  h.sort((a,b)=>a.from.localeCompare(b.from));
+  t.rentHistory=h;t.rent=Number(rent);return t;
+}
+
+function activeForMonth(month){
+  return Object.entries(S.tenants).filter(([,t])=>{
+    const j=t.joinMonth||month;
+    const l=t.leaveMonth||'9999-12';
+    return cmpM(j,month)<=0&&cmpM(l,month)>=0;
+  });
+}
+
+function getPay(id,m){return S.payments[pKey(id,m)];}
+
+function updateSummary(){
+  const m=S.viewMonth;
+  const active=activeForMonth(m);
+  const paidL=active.filter(([id])=>getPay(id,m));
+  const pendL=active.filter(([id])=>!getPay(id,m));
+  const collected=paidL.reduce((s,[id])=>s+Number(getPay(id,m)?.amount||0),0);
+  const outstanding=pendL.reduce((s,[,t])=>s+rentFor(t,m),0);
+  const pct=active.length?Math.round(paidL.length/active.length*100):0;
+  $('sumCollected').textContent=fmt(collected);
+  $('sumCollectedSub').textContent=`${paidL.length} payments · ${pct}%`;
+  $('sumOutstanding').textContent=fmt(outstanding);
+  $('sumOutstandingSub').textContent=`${pendL.length} payments remaining`;
+  $('monthLabel').textContent=fmtM(m);
+}
+
+function renderDashboard(){
+  const m=S.viewMonth;
+  const active=activeForMonth(m);
+  const paid=active.filter(([id])=>getPay(id,m));
+  const pend=active.filter(([id])=>!getPay(id,m));
+
+  const card=(id,t,p)=>{
+    const isPaid=!!p;
+    const amt=p?Number(p.amount):rentFor(t,m);
+    const dateStr=isPaid
+      ?'Paid: '+new Date(p.paidAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+      :`Due: ${fmtM(m)}`;
+    const method=isPaid?(p.method==='bank'?'Bank transfer':'Cash'):'';
+    const sub=[t.biz,t.unit].filter(Boolean).join(' · ');
+    return `
+    <div class="rent-item ${isPaid?'paid':'pend'}">
+      <div class="ri-icon ${isPaid?'paid':'pend'}">
+        ${isPaid
+          ?`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
+          :`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`}
+      </div>
+      <div>
+        <div class="ri-name">${t.name}</div>
+        <div class="ri-sub">${sub}${sub?'<br>':''}${isPaid&&method?method+' · ':''}${dateStr}</div>
+      </div>
+      <div class="ri-right">
+        <div class="ri-amt ${isPaid?'green':'red'}">${fmt(amt)}</div>
+        ${isPaid
+          ?`<span class="ri-badge paid">Paid</span>`
+          :`<button class="ri-badge pend" onclick="openPay('${id}','${m}')">Pending</button>`}
+      </div>
+    </div>`;
+  };
+
+  $('dash-paid').innerHTML=paid.length
+    ?`<div class="sec-label">PAID (${paid.length})</div>${paid.map(([id,t])=>card(id,t,getPay(id,m))).join('')}`:'';
+  $('dash-pend').innerHTML=pend.length
+    ?`<div class="sec-label" style="margin-top:${paid.length?14:2}px">OUTSTANDING (${pend.length})</div>${pend.map(([id,t])=>card(id,t,null)).join('')}`
+    :(!paid.length?'<div class="empty-state">No active tenants for this month.</div>':'');
+}
+
+function renderTenants(){
+  const m=nowMonth();
+  const active=Object.entries(S.tenants).filter(([,t])=>!t.leaveMonth);
+  $('tenantList').innerHTML=active.length?active.map(([id,t])=>{
+    const rent=rentFor(t,m);
+    return `
+    <div class="tenant-item">
+      <div class="t-head">
+        <div class="t-avatar">${initials(t.name)}</div>
+        <div class="t-info">
+          <div class="t-name">${t.name}</div>
+          <div class="t-sub">${[t.biz,t.unit].filter(Boolean).join(' · ')||'No property info'}${t.mobile?'<br>'+t.mobile:''}<br>Joined ${fmtM(t.joinMonth)}</div>
+        </div>
+        <div class="t-rent">${fmt(rent)}</div>
+      </div>
+      <div class="t-actions">
+        <button class="ta-btn" onclick="editTenant('${id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit details
+        </button>
+        <button class="ta-btn danger" onclick="tenantLeft('${id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Mark as left
+        </button>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty-state">No active tenants yet.</div>';
+}
+
+function renderAll(){
+  updateSummary();
+  renderDashboard();
+  renderTenants();
+}
+
+// ── PAGE NAV
+let currentPage='dashboard';
+function switchPage(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll(`[data-page="${page}"]`).forEach(n=>n.classList.add('active'));
+  // add tenant strip: only visible on tenants page
+  $('addTenantStrip').classList.toggle('visible',page==='tenants');
+  if(page==='tenants')renderTenants();
+}
+
+document.querySelectorAll('[data-page]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const page=btn.dataset.page;
+    // clicking dashboard resets to current month
+    if(page==='dashboard')S.viewMonth=nowMonth();
+    switchPage(page);
+    if(page==='dashboard')renderAll();
+  });
+});
+
+// ── MONTH NAV
+$('prevMonth').addEventListener('click',()=>{S.viewMonth=monthAdd(S.viewMonth,-1);renderAll();});
+$('nextMonth').addEventListener('click',()=>{S.viewMonth=monthAdd(S.viewMonth,1);renderAll();});
+
+// ── TENANT MODAL
+function resetTForm(){$('tid').value='';$('tName').value='';$('tBiz').value='';$('tUnit').value='';$('tMobile').value='';$('tRent').value='';$('tRentFrom').value=nowMonth();$('tJoin').value=nowMonth();$('tLeave').value='';$('tenantModalTitle').textContent='Add tenant';}
+$('addTenantBtn').addEventListener('click',()=>{resetTForm();openM('tenantModal');});
+$('closeTenantModal').addEventListener('click',()=>closeM('tenantModal'));
+window.editTenant=function(id){
+  const t=S.tenants[id];
+  $('tid').value=id;$('tName').value=t.name||'';$('tBiz').value=t.biz||'';$('tUnit').value=t.unit||'';
+  $('tMobile').value=t.mobile||'';$('tRent').value=rentFor(t,nowMonth())||'';
+  $('tRentFrom').value=nowMonth();$('tJoin').value=t.joinMonth||nowMonth();$('tLeave').value=t.leaveMonth||'';
+  $('tenantModalTitle').textContent='Edit tenant';openM('tenantModal');
+};
+$('saveTenantBtn').addEventListener('click',async()=>{
+  const id=$('tid').value||`t_${Date.now()}`;
+  if(!$('tName').value.trim())return alert('Name is required');
+  const rent=Number($('tRent').value||0);
+  if(!rent)return alert('Enter a rent amount');
+  const ex=S.tenants[id]||{rentHistory:[]};
+  const p={...ex,name:$('tName').value.trim(),biz:$('tBiz').value.trim(),unit:$('tUnit').value.trim(),mobile:$('tMobile').value.trim(),joinMonth:$('tJoin').value||nowMonth(),leaveMonth:$('tLeave').value||''};
+  setRentHist(p,rent,$('tRentFrom').value||nowMonth());
+  S.tenants[id]=p;
+  await fbPatch('tenants',{[id]:p});
+  closeM('tenantModal');renderAll();
+});
+
+window.tenantLeft=async function(id){
+  const t=S.tenants[id];
+  if(!confirm(`Mark ${t.name} as left?`))return;
+  t.leaveMonth=nowMonth();S.tenants[id]=t;
+  await fbPatch('tenants',{[id]:t});renderAll();
+};
+
+// ── PAYMENT
+window.openPay=function(id,month){
+  S.payTenant=id;
+  const t=S.tenants[id];const ex=getPay(id,month);
+  $('payName').value=t.name;$('payMonth').value=month;
+  $('payAmount').value=ex?.amount||rentFor(t,month);$('payMethod').value=ex?.method||'bank';
+  openM('payModal');
+};
+$('closePayModal').addEventListener('click',()=>closeM('payModal'));
+$('savePayBtn').addEventListener('click',async()=>{
+  const id=S.payTenant;const month=$('payMonth').value||nowMonth();
+  const p={tenantId:id,month,amount:Number($('payAmount').value||0),method:$('payMethod').value,paidAt:new Date().toISOString()};
+  S.payments[pKey(id,month)]=p;
+  await fbPut(`payments/${pKey(id,month)}`,p);
+  closeM('payModal');renderAll();
+});
+
+// ── PIN
+$('changePinBtn').addEventListener('click',()=>{$('pinInput').value=S.settings.pin||'';openM('pinModal');});
+$('closePinModal').addEventListener('click',()=>closeM('pinModal'));
+$('savePinBtn').addEventListener('click',async()=>{
+  const p=$('pinInput').value.trim();
+  if(!/^\d{4}$/.test(p))return alert('Enter exactly 4 digits');
+  S.settings.pin=p;await fbPatch('settings',{pin:p});closeM('pinModal');alert('PIN saved!');
+});
+
+// close modals on backdrop tap
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── INIT
+(async()=>{
+  $('topDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const data=await fbGet('');
+  S.tenants=data?.tenants||{};S.payments=data?.payments||{};S.settings=data?.settings||{};
+  Object.keys(S.tenants).forEach(id=>{
+    const t=S.tenants[id];
+    if(!Array.isArray(t.rentHistory)||!t.rentHistory.length)
+      t.rentHistory=[{from:t.joinMonth||nowMonth(),amount:Number(t.rent||0)}];
+  });
+  renderAll();
+  // init add tenant strip visibility (starts on dashboard, so hidden)
+  $('addTenantStrip').classList.toggle('visible',currentPage==='tenants');
+})();
+</script>
+</body>
+</html>

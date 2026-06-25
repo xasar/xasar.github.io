@@ -193,6 +193,17 @@ button{cursor:pointer;border:none;background:none;}
 .rec-row:last-child{border-bottom:none;}
 .rec-lbl{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
 .rec-val{font-weight:700;color:var(--text);text-align:right;word-break:break-word;}
+.pin-dot { width:16px; height:16px; border-radius:50%; background:var(--border); }
+.pin-dot.filled { background:var(--blue); }
+
+.dial-pad { display:grid; grid-template-columns:repeat(3, 72px); gap:20px; }
+.dial-pad button {
+  width:72px; height:72px; border-radius:50%;
+  background:var(--white); border:1px solid var(--border);
+  font-size:24px; font-weight:700; color:var(--text);
+  box-shadow:var(--shadow); transition:transform 0.1s;
+}
+.dial-pad button:active { transform:scale(0.9); background:var(--bg); }
 </style>
 </head>
 <body>
@@ -282,17 +293,22 @@ button{cursor:pointer;border:none;background:none;}
     </div>
 
 <div class="page" id="page-auth">
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;">
-        <div style="width:56px;height:56px;border-radius:50%;background:var(--blue-bg);color:var(--blue);display:grid;place-items:center;margin-bottom:16px;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
-        <div style="font-size:22px;font-weight:800;">App Locked</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px;margin-bottom:24px;">Enter your 4-digit PIN to continue</div>
-        <input type="password" id="authPin" maxlength="4" inputmode="numeric" placeholder="••••" style="font-size:24px;letter-spacing:8px;text-align:center;width:140px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#f9fafb;outline:none;">
-        <div id="authError" style="color:var(--red);font-size:12px;margin-top:12px;display:none;">Incorrect PIN. Try again.</div>
-        <button id="authBtn" class="mbtn primary" style="width:140px;margin-top:16px;">Unlock</button>
-      </div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:90vh;padding:20px;">
+    <div style="font-size:20px;font-weight:800;margin-bottom:24px;">Enter PIN</div>
+    
+    <div id="pinDisplay" style="display:flex;gap:16px;margin-bottom:40px;">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
+
+    <div class="dial-pad">
+      <button onclick="press(1)">1</button><button onclick="press(2)">2</button><button onclick="press(3)">3</button>
+      <button onclick="press(4)">4</button><button onclick="press(5)">5</button><button onclick="press(6)">6</button>
+      <button onclick="press(7)">7</button><button onclick="press(8)">8</button><button onclick="press(9)">9</button>
+      <button onclick="clearPin()">C</button><button onclick="press(0)">0</button><button onclick="delPin()">⌫</button>
+    </div>
+    <div id="authError" style="color:var(--red);font-size:12px;margin-top:20px;display:none;">Incorrect PIN</div>
+  </div>
+</div>
 
     <div class="page" id="page-error">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;">
@@ -788,17 +804,35 @@ $('savePinBtn').addEventListener('click',async()=>{
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 // ── AUTH LOGIC
-$('authBtn').addEventListener('click', () => {
-  const entered = $('authPin').value.trim();
-  if (entered === S.settings.pin) {
+let currentInput = '';
+
+function press(n) {
+  if (currentInput.length < 4) {
+    currentInput += n;
+    updateDots();
+  }
+  if (currentInput.length === 4) verifyPin();
+}
+
+function delPin() { currentInput = currentInput.slice(0, -1); updateDots(); }
+function clearPin() { currentInput = ''; updateDots(); }
+
+function updateDots() {
+  const dots = document.querySelectorAll('.pin-dot');
+  dots.forEach((dot, i) => dot.classList.toggle('filled', i < currentInput.length));
+}
+
+function verifyPin() {
+  if (currentInput === S.settings.pin) {
     $('authError').style.display = 'none';
-    $('authPin').value = ''; // clear input
+    currentInput = ''; updateDots();
     switchPage('dashboard');
     renderAll();
   } else {
     $('authError').style.display = 'block';
+    setTimeout(clearPin, 500); // Clear on error
   }
-});
+}
 
 // ── INIT
 (async()=>{

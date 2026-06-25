@@ -437,6 +437,21 @@ button{cursor:pointer;border:none;background:none;}
   </div>
 </div>
 
+<div class="modal-bg" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="detailName">Tenant Details</div>
+    <div class="receipt-details">
+      <div class="rec-row"><span class="rec-lbl">Business/Address</span><span class="rec-val" id="detBiz"></span></div>
+      <div class="rec-row"><span class="rec-lbl">Mobile</span><span class="rec-val" id="detMobile"></span></div>
+      <div class="rec-row"><span class="rec-lbl">Rent</span><span class="rec-val" id="detRent"></span></div>
+      <div class="rec-row"><span class="rec-lbl">Joined</span><span class="rec-val" id="detJoined"></span></div>
+      <div class="rec-row"><span class="rec-lbl">Reference</span><span class="rec-val" id="detRef"></span></div>
+    </div>
+    <button class="mbtn primary" style="width:100%" onclick="closeM('detailModal')">Close</button>
+  </div>
+</div>
+
 <script>
 const DB='https://rent-tracker-5d4b1-default-rtdb.asia-southeast1.firebasedatabase.app';
 const S={tenants:{},payments:{},settings:{},payTenant:null,viewMonth:new Date().toISOString().slice(0,7)};
@@ -560,7 +575,7 @@ function getRentItemHTML(id, t, payment, isReadOnly, month) {
     </div>
     <div class="ri-info">
       <div class="ri-name">${sub}${sub ? '<br>' : ''}</div>
-      <div class="ri-sub">${t.name} ${isPaid && method ? method + ' · ' : ''}${dateStr}</div>
+      <div class="ri-sub">${isPaid && method ? method + ' · ' : ''}${dateStr}</div>
     </div>
     <div class="ri-right">
       <div class="ri-amt" style="color:${amtColor}">${fmt(amt)}</div>
@@ -641,16 +656,16 @@ function renderTenants(){
     const hasPaid = !!getPay(id, m);
     const avatarBg = hasPaid ? 'var(--green-accent)' : 'var(--red)';
 
-    return `
-    <div class="tenant-card">
-      <div class="tc-top" style="align-items: center;">
-        <div class="tc-avatar" style="background:${avatarBg}">${initials(t.name)}</div>
-        
-        <div class="tc-info" style="margin: 0 0 10px 10px;">
-          <div class="tc-name">${t.name}</div>
-          <div class="tc-sub" style="margin-top:2px;">${t.biz || '-'} ${t.unit ? '· ' + t.unit : ''}</div>
-          <div style="margin-top:6px; font-size: 12px; display: flex; align-items: center; gap: 10px;">
-            <span style="color:var(--green); font-weight:700;">${fmt(rent)}/m</span>
+    // Inside renderTenants() mapping logic:
+return `
+<div class="tenant-card" onclick="openTenantDetails('${id}')" style="cursor:pointer;">
+  <div class="tc-top" style="align-items: center;">
+    <div class="tc-avatar" style="background:${avatarBg}">${initials(t.name)}</div>
+    <div class="tc-info" style="margin: 0 12px;">
+      <div class="tc-name">${t.biz || ''}</div>
+      
+  <div style="margin-top:6px; font-size: 12px; display: flex; align-items: center; gap: 10px;">
+            <span style="color:var(--green); font-weight:700;">${t.name}</span>
             ${t.mobile ? `
               <span style="display:flex; align-items:center; gap:4px; color:var(--muted);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
@@ -659,13 +674,12 @@ function renderTenants(){
                 ${t.mobile}
               </span>` : ''}
           </div>
-        </div>
-
-        <div class="tc-action">
-          <button class="tc-edit" onclick="editTenant('${id}')">Edit</button>
-        </div>
-      </div>
-    </div>`;
+    </div>
+    <div class="tc-action">
+      <button class="tc-edit" onclick="event.stopPropagation(); editTenant('${id}')">Edit</button>
+    </div>
+  </div>
+</div>`;
   }).join('') : '<div class="empty-state">No tenants found.</div>';
 }
 
@@ -771,6 +785,18 @@ $('savePayBtn').addEventListener('click',async()=>{
   await fbPut(`payments/${pKey(id,month)}`,p);
   closeM('payModal');renderAll();
 });
+
+//── CONTACT CARD
+window.openTenantDetails = function(id) {
+  const t = S.tenants[id];
+  $('detailName').textContent = t.name;
+  $('detBiz').textContent = `${t.biz || '-'} · ${t.unit || '-'}`;
+  $('detMobile').textContent = t.mobile || 'N/A';
+  $('detRent').textContent = fmt(rentFor(t, nowMonth()));
+  $('detJoined').textContent = fmtM(t.joinMonth);
+  $('detRef').textContent = t.reference || '-';
+  openM('detailModal');
+}; 
 
 // ── RECEIPT 
 window.openReceipt=function(id,month){

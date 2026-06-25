@@ -630,11 +630,11 @@ function renderTenants(){
       <div class="tc-top" style="align-items: center;">
         <div class="tc-avatar" style="background:${avatarBg}">${initials(t.name)}</div>
         
-        <div class="tc-info" style="margin: 0 12px;">
+        <div class="tc-info" style="margin: 0 0 10px 10px;">
           <div class="tc-name">${t.name}</div>
           <div class="tc-sub" style="margin-top:2px;">${t.biz || '-'} ${t.unit ? '· ' + t.unit : ''}</div>
           <div style="margin-top:6px; font-size: 12px; display: flex; align-items: center; gap: 10px;">
-            <span style="color:var(--green); font-weight:700;">${fmt(rent)}</span>
+            <span style="color:var(--green); font-weight:700;">${fmt(rent)}/m</span>
             ${t.mobile ? `
               <span style="display:flex; align-items:center; gap:4px; color:var(--muted);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">

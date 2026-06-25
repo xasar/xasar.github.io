@@ -47,8 +47,20 @@ button{cursor:pointer;border:none;background:none;}
 .m-label{font-size:17px;font-weight:700;letter-spacing:-.02em;min-width:130px;text-align:center;}
 
 /* ── SUMMARY (Payments Page) ── */
-.summary-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 0 16px;}
-.sum-card{border-radius:12px;padding:16px;flex:1; box-shadow:0 2px 10px rgba(0,0,0,0.06);}
+.summary-row {
+  display: flex; 
+  gap: 12px;
+  padding: 0 0 16px;
+}
+.sum-card {
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+.sum-card:first-child { flex: 1.0; }
+.sum-card:last-child { flex: 1; }
 .sum-card.green{background:var(--green-bg);border:1px solid var(--green-border);}
 .sum-card.red{background:var(--red-bg);border:1px solid var(--red-border);}
 .sum-hd{font-size:13px;font-weight:600;margin-bottom:8px;}
@@ -57,7 +69,15 @@ button{cursor:pointer;border:none;background:none;}
 .sum-val{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1.1;}
 .sum-val.green{color:var(--green);}
 .sum-val.red{color:var(--red);}
-.sum-sub{font-size:12px;margin-top:6px;}
+.sum-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
+  font-weight: 600;
+  display: flex; /* Use flex to keep Bank/Cash on one line */
+  gap: 12px;     /* Space between Bank and Cash */
+  white-space: nowrap; /* Prevents wrapping */
+}
 .sum-sub.green{color:#15803d;}
 .sum-sub.red{color:#b91c1c;}
 
@@ -226,7 +246,7 @@ button{cursor:pointer;border:none;background:none;}
           <div class="sum-sub green" id="sumCollectedSub">0 payments · 0%</div>
         </div>
         <div class="sum-card red">
-          <div class="sum-hd red">Outstanding</div>
+          <div class="sum-hd red">Pending</div>
           <div class="sum-val red" id="sumOutstanding">Rs: 0</div>
           <div class="sum-sub red" id="sumOutstandingSub">0 payments remaining</div>
         </div>
@@ -318,7 +338,7 @@ button{cursor:pointer;border:none;background:none;}
     <input type="hidden" id="tid">
     <div class="field"><label>Full name</label><input id="tName" placeholder="e.g. Robert Brown"></div>
     <div class="field"><label>Business / property name</label><input id="tBiz" placeholder="e.g. Pine Road Suites"></div>
-    <div class="field"><label>Unit / Room</label><input id="tUnit" placeholder="e.g. Unit 7B"></div>
+    <div class="field"><label>Address</label><input id="tUnit" placeholder="e.g. Unit 7B"></div>
     <div class="field"><label>Mobile</label><input id="tMobile" placeholder="+92 300 1234567"></div>
     <div class="field"><label>Reference / Notes</label><input id="tRef" placeholder="e.g. Any ID, comments, tags..."></div>
     <div class="row2">
@@ -455,19 +475,43 @@ function activeForMonth(month){
 function getPay(id,m){return S.payments[pKey(id,m)];}
 
 function updateSummary(){
-  const m=S.viewMonth;
-  const active=activeForMonth(m);
-  const paidL=active.filter(([id])=>getPay(id,m));
-  const pendL=active.filter(([id])=>!getPay(id,m));
-  const collected=paidL.reduce((s,[id])=>s+Number(getPay(id,m)?.amount||0),0);
-  const outstanding=pendL.reduce((s,[,t])=>s+rentFor(t,m),0);
-  const pct=active.length?Math.round(paidL.length/active.length*100):0;
+  const m = S.viewMonth;
+  const active = activeForMonth(m);
   
-  $('sumCollected').textContent=fmt(collected);
-  $('sumCollectedSub').textContent=`${paidL.length} payments · ${pct}%`;
-  $('sumOutstanding').textContent=fmt(outstanding);
-  $('sumOutstandingSub').textContent=`${pendL.length} payments remaining`;
-  $('monthLabel').textContent=fmtM(m);
+  // Calculate totals by iterating through all payments in the current month
+  let bankTotal = 0;
+  let cashTotal = 0;
+  let paidCount = 0;
+
+  active.forEach(([id]) => {
+    const p = getPay(id, m);
+    if (p) {
+      paidCount++;
+      const amt = Number(p.amount || 0);
+      // Ensure we compare strings safely
+      if (String(p.method).toLowerCase() === 'bank') {
+        bankTotal += amt;
+      } else {
+        cashTotal += amt;
+      }
+    }
+  });
+
+  const totalCollected = bankTotal + cashTotal;
+  const outstanding = active.reduce((s, [id, t]) => {
+    if (!getPay(id, m)) s += rentFor(t, m);
+    return s;
+  }, 0);
+  
+  const pct = active.length ? Math.round(paidCount / active.length * 100) : 0;
+  
+  // Update UI
+  $('sumCollected').textContent = fmt(totalCollected);
+  $('sumCollectedSub').innerHTML = `<span>Bank: ${fmt(bankTotal)}</span> <span>Cash: ${fmt(cashTotal)}</span>`;
+  
+  $('sumOutstanding').textContent = fmt(outstanding);
+  $('sumOutstandingSub').textContent = `${active.length - paidCount} payments remaining`;
+  $('monthLabel').textContent = fmtM(m);
 }
 
 // Reusable card renderer
@@ -583,28 +627,27 @@ function renderTenants(){
 
     return `
     <div class="tenant-card">
-      <div class="tc-top">
+      <div class="tc-top" style="align-items: center;">
         <div class="tc-avatar" style="background:${avatarBg}">${initials(t.name)}</div>
-        <div class="tc-info">
+        
+        <div class="tc-info" style="margin: 0 12px;">
           <div class="tc-name">${t.name}</div>
-          ${t.unit ? `<div class="tc-sub">${t.unit}</div>` : ''}
+          <div class="tc-sub" style="margin-top:2px;">${t.biz || '-'} ${t.unit ? '· ' + t.unit : ''}</div>
+          <div style="margin-top:6px; font-size: 13px; display: flex; align-items: center; gap: 10px;">
+            <span style="color:var(--green); font-weight:700;">${fmt(rent)} /m</span>
+            ${t.mobile ? `
+              <span style="display:flex; align-items:center; gap:4px; color:var(--muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                ${t.mobile}
+              </span>` : ''}
+          </div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px;">${t.biz || '-'}</div>
-          <div class="tc-rent">${fmt(rent)} <span>/month</span></div>
+
+        <div class="tc-action">
+          <button class="tc-edit" onclick="editTenant('${id}')">Edit</button>
         </div>
-      </div>
-      
-      <div class="tc-bottom">
-        <div class="tc-phone">
-          ${t.mobile ? `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          ${t.mobile}
-          ` : '<span></span>'}
-        </div>
-        <button class="tc-edit" onclick="editTenant('${id}')">Edit</button>
       </div>
     </div>`;
   }).join('') : '<div class="empty-state">No tenants found.</div>';
